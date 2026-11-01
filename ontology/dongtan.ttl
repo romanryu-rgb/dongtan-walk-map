@@ -1,0 +1,55 @@
+@prefix dt:   <https://romanryu-rgb.github.io/dongtan-walk-map/ontology#> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix geo:  <http://www.opengis.net/ont/geosparql#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix dct:  <http://purl.org/dc/terms/> .
+
+<https://romanryu-rgb.github.io/dongtan-walk-map/ontology> a owl:Ontology ;
+    rdfs:label "동탄 걷기·운동 지도 온톨로지"@ko ;
+    rdfs:comment "청계동 552 중심 반경 10km의 경로·시설과 그 관계를 표현한다. 생활편의시설은 dt:Amenity 하위 클래스로 확장한다."@ko .
+
+# ── 클래스 ────────────────────────────────────────────
+dt:Place a owl:Class ; rdfs:subClassOf geo:Feature ; rdfs:label "장소"@ko, "Place"@en .
+
+dt:Route a owl:Class ; rdfs:subClassOf dt:Place ; rdfs:label "경로"@ko .
+dt:WalkingTrail a owl:Class ; rdfs:subClassOf dt:Route ; rdfs:label "산책로"@ko .
+dt:RunningCourse a owl:Class ; rdfs:subClassOf dt:Route ; rdfs:label "런닝코스"@ko .
+dt:BikePath a owl:Class ; rdfs:subClassOf dt:Route ; rdfs:label "자전거도로"@ko .
+
+dt:Facility a owl:Class ; rdfs:subClassOf dt:Place ; rdfs:label "시설"@ko .
+dt:RestFacility a owl:Class ; rdfs:subClassOf dt:Facility ; rdfs:label "휴게시설"@ko .
+dt:ExerciseFacility a owl:Class ; rdfs:subClassOf dt:Facility ; rdfs:label "운동시설"@ko .
+dt:Park a owl:Class ; rdfs:subClassOf dt:Facility ; rdfs:label "공원"@ko .
+dt:Amenity a owl:Class ; rdfs:subClassOf dt:Facility ; rdfs:label "생활편의시설"@ko ;
+    rdfs:comment "화장실·약국·편의점 등은 이 클래스의 하위 클래스로 추가한다."@ko .
+
+dt:District a owl:Class ; rdfs:label "행정동"@ko .
+dt:Dataset a owl:Class ; rdfs:label "데이터 출처"@ko .
+dt:Proximity a owl:Class ; rdfs:label "근접 관계(거리 포함)"@ko ;
+    rdfs:comment "두 장소 사이 거리(m)를 담는 관계 노드. 출발 장소 dt:hasProximity 이 노드, 이 노드 dt:proximityTarget 대상."@ko .
+
+# ── 데이터 속성 ───────────────────────────────────────
+dt:distanceFromCenterKm a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:domain dt:Place ; rdfs:range xsd:decimal ;
+    rdfs:label "중심으로부터의 거리(km)"@ko ;
+    rdfs:comment "청계동 552 중심에서의 거리. 경로는 가장 가까운 지점 기준."@ko .
+dt:address a owl:DatatypeProperty ; rdfs:domain dt:Place ; rdfs:range xsd:string ; rdfs:label "주소"@ko .
+dt:referenceDate a owl:DatatypeProperty ; rdfs:domain dt:Place ; rdfs:range xsd:date ; rdfs:label "데이터 기준일"@ko .
+dt:sourceRecordId a owl:DatatypeProperty ; rdfs:domain dt:Place ; rdfs:range xsd:string ; rdfs:label "원본 레코드 ID"@ko .
+dt:facilityInfo a owl:DatatypeProperty ; rdfs:domain dt:Place ; rdfs:range xsd:string ; rdfs:label "보유시설 정보(원문)"@ko .
+dt:lengthKm a owl:DatatypeProperty ; rdfs:domain dt:Route ; rdfs:range xsd:decimal ; rdfs:label "길이(km)"@ko .
+dt:category a owl:DatatypeProperty ; rdfs:domain dt:Place ; rdfs:range xsd:string ; rdfs:label "세부 유형(원문)"@ko .
+dt:distanceM a owl:DatatypeProperty ; rdfs:domain dt:Proximity ; rdfs:range xsd:integer ; rdfs:label "거리(m)"@ko .
+
+# ── 객체 속성 ─────────────────────────────────────────
+dt:fromDataset a owl:ObjectProperty ; rdfs:domain dt:Place ; rdfs:range dt:Dataset ; rdfs:label "출처"@ko .
+dt:inDistrict a owl:ObjectProperty ; rdfs:domain dt:Place ; rdfs:range dt:District ; rdfs:label "행정동에 속함"@ko .
+dt:locatedInPark a owl:ObjectProperty ; rdfs:domain dt:Facility ; rdfs:range dt:Park ; rdfs:label "공원 안에 있음"@ko .
+dt:alongRoute a owl:ObjectProperty ; rdfs:domain dt:Facility ; rdfs:range dt:Route ; rdfs:label "경로 위·옆에 있음"@ko .
+dt:hasRouteFacility a owl:ObjectProperty ; owl:inverseOf dt:alongRoute ; rdfs:label "경로상 시설"@ko .
+dt:nearTo a owl:ObjectProperty, owl:SymmetricProperty ; rdfs:domain dt:Place ; rdfs:range dt:Place ;
+    rdfs:label "근처에 있음"@ko ; rdfs:comment "500m 이내. 거리는 dt:hasProximity 노드에 있음."@ko .
+dt:hasProximity a owl:ObjectProperty ; rdfs:domain dt:Place ; rdfs:range dt:Proximity ; rdfs:label "근접 관계"@ko .
+dt:proximityTarget a owl:ObjectProperty ; rdfs:domain dt:Proximity ; rdfs:range dt:Place ; rdfs:label "근접 대상"@ko .
