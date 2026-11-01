@@ -1,4 +1,5 @@
 import { clampRadius, featureDistanceKm, formatDistance, haversineKm, naverLinks, nextLocationMode, rankFeatures } from "./logic.js";
+import { initTools } from "./tools.js";
 
 const CAT = {
   walk: { label: "산책로", icon: "🚶", color: "#16a34a" },
@@ -9,6 +10,7 @@ const CAT = {
   rest: { label: "휴게시설", icon: "🪑", color: "#7c3aed" },
   park: { label: "공원", icon: "🌳", color: "#15803d" },
   toilet: { label: "화장실", icon: "🚻", color: "#0e7490" },
+  conv: { label: "편의점", icon: "🏪", color: "#db2777" },
 };
 const ALL = new Set(Object.keys(CAT));
 const LIST_LIMIT = 50;
@@ -114,7 +116,7 @@ function renderList() {
     const mine = dUserKm != null ? `나에게서 ${formatDistance(dUserKm)} · ` : "";
     return `<li data-id="${esc(p.id)}">
       <span class="dot" style="background:${c.color}22">${c.icon}</span>
-      <div class="li-body"><div class="li-name">${esc(displayName(p))}</div>
+      <div class="li-body"><div class="li-name">${p.h24 ? '<span class="badge">24시간</span> ' : ""}${esc(displayName(p))}</div>
         <div class="li-dist">${mine}중심 ${p.d.toFixed(2)}km</div></div>
       <button class="naver" data-nav="${esc(p.id)}" aria-label="네이버 지도에서 열기">네이버</button></li>`;
   }).join("");
@@ -194,6 +196,20 @@ $("#detail").addEventListener("click", (e) => {
   const go = e.target.closest("[data-go]");
   if (go) { e.preventDefault(); showDetail(go.dataset.go); }
 });
+
+// ── 도구 패널(거리 재기·메모) ─────────────────────
+function showPanel(html) {
+  $("#tool").innerHTML = html;
+  ["#list", "#detail", "#sheet-head"].forEach((s) => { $(s).hidden = true; });
+  $("#tool").hidden = false;
+  if (sheetState() === "peek") setSheet("half");
+}
+function hidePanel() {
+  $("#tool").hidden = true;
+  $("#tool").innerHTML = "";
+  $("#list").hidden = false;
+  $("#sheet-head").hidden = false;
+}
 
 // ── 분류 칩 ───────────────────────────────────────
 $("#chips").addEventListener("click", (e) => {
@@ -289,6 +305,7 @@ async function main() {
   buildLayers();
   renderList();
   startGeolocation();
+  initTools({ map, $, esc, toast, setSheet, showPanel, hidePanel });
 }
 
 main().catch((err) => {

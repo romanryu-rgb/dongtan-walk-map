@@ -67,3 +67,13 @@ node --test tests/web/logic.test.mjs
 2. `pipeline/sources.py` 의 `PUBLIC` 에 데이터셋 매핑 추가, `pipeline/records.py` 의 `FACILITY_CLASSES` 에 클래스 추가
 3. `pipeline/export_web.py` 의 `CAT`, `site/js/app.js` 의 `CAT`, `site/index.html` 칩에 분류 추가
 4. `python -m pipeline.run`
+
+## 지도 도구
+
+- **📏 거리 재기**: 버튼을 누르고 지도에서 출발 → 경유(여러 개) → 도착 순서로 누르면 구간별 거리·걷는 시간과 합계를 보여 줍니다.
+  실제 걷는 길은 키가 필요 없는 공개 도보 경로 서버(routing.openstreetmap.de, OSRM)로 계산하고, 연결이 안 되면 직선거리(시속 4.5km)로 표시합니다.
+- **📝 메모**: 암호 key를 아는 사람만 지도 위 지점에 메모를 남기고 볼 수 있습니다. 메모는 AES-GCM으로 암호화되어 **그 기기 브라우저에만** 저장되고,
+  "파일로 내보내기/가져오기"로 다른 기기에 옮깁니다(같은 key 필요).
+  - key 파일: `secrets/memo-key.txt` (이 PC에만 있음, git 제외). 새로 만들기: 기존 파일을 지우고 `python -m pipeline.memo_key` 실행 후 배포
+  - 사이트에는 key 대신 검증값(`site/data/memo-config.json`)만 공개됩니다. key를 바꾸면 이전 key로 저장한 메모는 열 수 없습니다.
+- **반경 선택**: 1~10km. 내 위치가 동탄 10km 안이면 내 위치 기준, 아니면 지도 중심 기준입니다.

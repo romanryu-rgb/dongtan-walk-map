@@ -22,7 +22,7 @@ def main(refresh=False):
     places += trails
 
     osm = {}
-    for name in ("fitness", "rest", "running", "walking", "cycleway", "hiking", "peaks"):
+    for name in ("fitness", "rest", "running", "walking", "cycleway", "hiking", "peaks", "convenience"):
         osm[name] = sources.osm_places(name, fetch_osm.query(name, refresh=refresh))
         print(f"[OSM] {name}: {len(osm[name])}")
 

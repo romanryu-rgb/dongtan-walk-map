@@ -118,8 +118,10 @@ def trail_places(data, geocode):
 
 
 OSM_CLASS = {"fitness": "ExerciseFacility", "rest": "RestFacility", "running": "RunningCourse",
-             "walking": "WalkingTrail", "cycleway": "BikePath", "hiking": "HikingTrail", "peaks": "Peak"}
+             "walking": "WalkingTrail", "cycleway": "BikePath", "hiking": "HikingTrail", "peaks": "Peak",
+             "convenience": "ConvenienceStore"}
 HIKE_NAME = re.compile(r"등산|정맥|능선|산$|봉$|산길")
+H24 = {"24/7", "24hours", "00:00-24:00", "Mo-Su 00:00-24:00", "24시간"}
 PAVED = {"paving_stones", "asphalt", "concrete", "paved", "sett", "concrete:plates", "wood"}
 
 
@@ -167,6 +169,11 @@ def osm_places(name, data):
         extra = {"category": category, "osm_tags": tags}
         if tags.get("ele"):
             extra["facility_info"] = f"해발 {tags['ele']}m"
+        if name == "convenience":
+            oh = (tags.get("opening_hours") or "").strip()
+            extra["category"] = (tags.get("brand") or "").strip()
+            extra["open24h"] = oh in H24
+            extra["facility_info"] = "영업시간: 24시간" if extra["open24h"] else (f"영업시간: {oh}" if oh else "영업시간 미확인")
         out.append(Place(id=f"osm-{rid}", source="osm", record_id=rid,
                          cls=_hiking_class(el, tags) if name == "hiking" else cls,
                          name=(tags.get("name") or "").strip(), coords=coords, dataset=OSM_DATASET, extra=extra))

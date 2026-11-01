@@ -29,6 +29,7 @@ dt:Park a owl:Class ; rdfs:subClassOf dt:Facility ; rdfs:label "공원"@ko .
 dt:Amenity a owl:Class ; rdfs:subClassOf dt:Facility ; rdfs:label "생활편의시설"@ko ;
     rdfs:comment "화장실·약국·편의점 등은 이 클래스의 하위 클래스로 추가한다."@ko .
 dt:PublicToilet a owl:Class ; rdfs:subClassOf dt:Amenity ; rdfs:label "화장실"@ko .
+dt:ConvenienceStore a owl:Class ; rdfs:subClassOf dt:Amenity ; rdfs:label "편의점"@ko .
 
 dt:District a owl:Class ; rdfs:label "행정동"@ko .
 dt:Dataset a owl:Class ; rdfs:label "데이터 출처"@ko .
@@ -46,6 +47,8 @@ dt:sourceRecordId a owl:DatatypeProperty ; rdfs:domain dt:Place ; rdfs:range xsd
 dt:facilityInfo a owl:DatatypeProperty ; rdfs:domain dt:Place ; rdfs:range xsd:string ; rdfs:label "보유시설 정보(원문)"@ko .
 dt:lengthKm a owl:DatatypeProperty ; rdfs:domain dt:Route ; rdfs:range xsd:decimal ; rdfs:label "길이(km)"@ko .
 dt:category a owl:DatatypeProperty ; rdfs:domain dt:Place ; rdfs:range xsd:string ; rdfs:label "세부 유형(원문)"@ko .
+dt:open24Hours a owl:DatatypeProperty ; rdfs:domain dt:Place ; rdfs:range xsd:boolean ;
+    rdfs:label "24시간 영업"@ko ; rdfs:comment "원본에 24시간 영업이 명시된 경우에만 true."@ko .
 dt:distanceM a owl:DatatypeProperty ; rdfs:domain dt:Proximity ; rdfs:range xsd:integer ; rdfs:label "거리(m)"@ko .
 
 # ── 객체 속성 ─────────────────────────────────────────

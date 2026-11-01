@@ -39,3 +39,9 @@ def test_hiking_trail_is_route_and_peak_is_place():
     graph = g()
     assert graph.query(PREFIX + "ASK { dt:HikingTrail rdfs:subClassOf dt:Route }").askAnswer
     assert graph.query(PREFIX + "ASK { dt:Peak rdfs:subClassOf dt:Place }").askAnswer
+
+
+def test_convenience_store_is_amenity_with_open24h_property():
+    graph = g()
+    assert graph.query(PREFIX + "ASK { dt:ConvenienceStore rdfs:subClassOf dt:Amenity }").askAnswer
+    assert graph.query(PREFIX + "ASK { dt:open24Hours a ?t }").askAnswer

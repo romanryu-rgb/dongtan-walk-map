@@ -70,6 +70,8 @@ def build(places, rels):
             g.add((s, DT.referenceDate, Literal(p.ref_date, datatype=XSD.date)))
         if p.extra.get("facility_info"):
             g.add((s, DT.facilityInfo, Literal(p.extra["facility_info"])))
+        if "open24h" in p.extra:
+            g.add((s, DT.open24Hours, Literal(bool(p.extra["open24h"]))))
         if p.extra.get("category"):
             g.add((s, DT.category, Literal(p.extra["category"])))
         if p.extra.get("length_km") and (v := _decimal(p.extra["length_km"])) is not None:

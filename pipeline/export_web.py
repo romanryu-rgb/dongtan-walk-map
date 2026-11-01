@@ -14,7 +14,7 @@ PREFIX geo: <http://www.opengis.net/ont/geosparql#>
 
 CAT = {"WalkingTrail": "walk", "RunningCourse": "run", "BikePath": "bike",
        "ExerciseFacility": "exercise", "RestFacility": "rest", "Park": "park", "PublicToilet": "toilet",
-       "HikingTrail": "hike", "Peak": "hike"}
+       "HikingTrail": "hike", "Peak": "hike", "ConvenienceStore": "conv"}
 ID_PREFIX = config.BASE + "id/"
 
 
@@ -34,11 +34,11 @@ def _rows(g, q):
 
 def export(g, path=config.WEB_DATA_PATH):
     base = {}
-    for r in _rows(g, """SELECT ?s ?cls ?name ?d ?wkt ?src ?addr ?date ?info ?category ?len WHERE {
+    for r in _rows(g, """SELECT ?s ?cls ?name ?d ?wkt ?src ?addr ?date ?info ?category ?len ?h24 WHERE {
         ?s a ?cls ; dt:distanceFromCenterKm ?d ; geo:hasGeometry/geo:asWKT ?wkt ; dt:fromDataset ?ds .
         ?ds rdfs:label ?src .
         OPTIONAL { ?s rdfs:label ?name } OPTIONAL { ?s dt:address ?addr } OPTIONAL { ?s dt:referenceDate ?date }
-        OPTIONAL { ?s dt:facilityInfo ?info } OPTIONAL { ?s dt:category ?category } OPTIONAL { ?s dt:lengthKm ?len }
+        OPTIONAL { ?s dt:facilityInfo ?info } OPTIONAL { ?s dt:category ?category } OPTIONAL { ?s dt:lengthKm ?len } OPTIONAL { ?s dt:open24Hours ?h24 }
         FILTER(STRSTARTS(STR(?cls), STR(dt:)))
     }"""):
         cls = str(r.cls).removeprefix(config.ONT)
@@ -52,7 +52,8 @@ def export(g, path=config.WEB_DATA_PATH):
         base[key] = {"id": _short(r.s), "name": str(r.name or ""), "cls": cls, "cat": CAT[cls],
                      "d": round(float(r.d), 2), "addr": str(r.addr or ""), "srcs": [str(r.src)],
                      "date": str(r.date or ""), "info": str(r.info or ""), "type": str(r.category or ""),
-                     "len": float(r.len) if r.len is not None else None, "_wkt": str(r.wkt)}
+                     "len": float(r.len) if r.len is not None else None,
+                     "h24": bool(r.h24.toPython()) if r.h24 is not None else None, "_wkt": str(r.wkt)}
 
     alt = defaultdict(list)
     for r in _rows(g, "SELECT ?s ?a WHERE { ?s skos:altLabel ?a }"):

@@ -191,3 +191,15 @@ def test_walking_query_no_longer_takes_hiking_relations():
     from pipeline.fetch_osm import QUERIES
     assert "hiking" not in QUERIES["walking"] and "route=hiking" in QUERIES["hiking"]
     assert "natural=peak" in QUERIES["peaks"]
+
+
+def test_convenience_store_24h_and_unknown_hours():
+    data = {"elements": [
+        {"type": "node", "id": 1, "lat": 37.2, "lon": 127.1, "tags": {"shop": "convenience", "name": "GS25 동탄역점", "brand": "GS25", "opening_hours": "24/7"}},
+        {"type": "node", "id": 2, "lat": 37.2, "lon": 127.1, "tags": {"shop": "convenience", "name": "CU 반송점", "brand": "CU"}},
+        {"type": "node", "id": 3, "lat": 37.2, "lon": 127.1, "tags": {"shop": "convenience", "name": "미니스톱", "opening_hours": "Mo-Fr 10:00-19:00"}}]}
+    a, b, c = osm_places("convenience", data)
+    assert a.cls == "ConvenienceStore" and a.extra["category"] == "GS25" and a.extra["open24h"] is True
+    assert "영업시간: 24시간" in a.extra["facility_info"]
+    assert b.extra["open24h"] is False and "영업시간 미확인" in b.extra["facility_info"]
+    assert c.extra["open24h"] is False and "영업시간: Mo-Fr 10:00-19:00" in c.extra["facility_info"]

@@ -90,3 +90,13 @@ def test_hiking_trail_and_peak_export_as_hike(tmp_path):
               coords=[CENTER], dataset="OpenStreetMap", dist_center_km=0.0)
     fc = export(build([t, k], {"near": [], "along": [], "in_park": [], "district": {}}), tmp_path / "p.geojson")
     assert sorted(f["properties"]["cat"] for f in fc["features"]) == ["hike", "hike"]
+
+
+def test_convenience_store_exports_conv_with_h24_flag(tmp_path):
+    s = Place(id="osm-node-1", source="osm", record_id="node-1", cls="ConvenienceStore", name="GS25",
+              coords=[CENTER], dataset="OpenStreetMap", dist_center_km=0.0, extra={"open24h": True})
+    u = Place(id="osm-node-2", source="osm", record_id="node-2", cls="ConvenienceStore", name="CU",
+              coords=[CENTER], dataset="OpenStreetMap", dist_center_km=0.0, extra={"open24h": False})
+    fc = export(build([s, u], {"near": [], "along": [], "in_park": [], "district": {}}), tmp_path / "p.geojson")
+    props = {f["properties"]["name"]: f["properties"] for f in fc["features"]}
+    assert props["GS25"]["cat"] == "conv" and props["GS25"]["h24"] is True and props["CU"]["h24"] is False
