@@ -24,6 +24,7 @@ dt:ExerciseFacility a owl:Class ; rdfs:subClassOf dt:Facility ; rdfs:label "운�
 dt:Park a owl:Class ; rdfs:subClassOf dt:Facility ; rdfs:label "공원"@ko .
 dt:Amenity a owl:Class ; rdfs:subClassOf dt:Facility ; rdfs:label "생활편의시설"@ko ;
     rdfs:comment "화장실·약국·편의점 등은 이 클래스의 하위 클래스로 추가한다."@ko .
+dt:PublicToilet a owl:Class ; rdfs:subClassOf dt:Amenity ; rdfs:label "화장실"@ko .
 
 dt:District a owl:Class ; rdfs:label "행정동"@ko .
 dt:Dataset a owl:Class ; rdfs:label "데이터 출처"@ko .

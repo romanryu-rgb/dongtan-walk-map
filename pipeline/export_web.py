@@ -13,7 +13,7 @@ PREFIX geo: <http://www.opengis.net/ont/geosparql#>
 """ % config.ONT
 
 CAT = {"WalkingTrail": "walk", "RunningCourse": "run", "BikePath": "bike",
-       "ExerciseFacility": "exercise", "RestFacility": "rest", "Park": "park"}
+       "ExerciseFacility": "exercise", "RestFacility": "rest", "Park": "park", "PublicToilet": "toilet"}
 ID_PREFIX = config.BASE + "id/"
 
 

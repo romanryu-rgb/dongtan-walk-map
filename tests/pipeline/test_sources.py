@@ -146,3 +146,16 @@ def test_osm_sidewalks_and_crossings_are_not_trails():
         {"type": "way", "id": 2, "tags": {"highway": "footway", "footway": "crossing", "name": "동탄오산로"}, "geometry": geom},
         {"type": "way", "id": 3, "tags": {"highway": "path", "name": "동탄 둘레길"}, "geometry": geom}]}
     assert [p.name for p in osm_places("walking", data)] == ["동탄 둘레길"]
+
+
+def test_toilet_row_maps_to_public_toilet():
+    row = {"TOILET_NM": " 여울공원 화장실 ", "TOILET_TYPE": "공중화장실", "RDNMADR": "경기도 화성시 동탄구 노작로 147",
+           "LNMADR": "", "LATITUDE": "37.2001", "LONGITUDE": "127.0712", "OPEN_TIME": "24시간",
+           "UNISEX_TOILET_YN": "N", "MEN_HANDICAP_TOILET_BOWL_NUMBER": "1", "LADIES_HANDICAP_TOILET_BOWL_NUMBER": None,
+           "DIPERS_EXCHG_POSI": "여자화장실", "EMG_BELL_YN": "Y", "REFERENCE_DATE": "2026-07-01", "INSTT_CODE": "4590000"}
+    [p] = public_places("15012892", {"rows": [row]})
+    assert p.cls == "PublicToilet" and p.name == "여울공원 화장실"
+    assert p.dataset == "전국공중화장실표준데이터" and p.extra["category"] == "공중화장실"
+    assert "개방시간: 24시간" in p.extra["facility_info"]
+    assert "기저귀교환대: 여자화장실" in p.extra["facility_info"]
+    assert not p.is_route

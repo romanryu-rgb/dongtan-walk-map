@@ -74,3 +74,10 @@ def test_export_keeps_one_feature_per_place(tmp_path):
     places, rels = sample()
     fc = export(build(places, rels), tmp_path / "p.geojson")
     assert len(fc["features"]) == len(places)
+
+
+def test_toilet_exported_with_toilet_category(tmp_path):
+    t = Place(id="std-15012892-x", source="std-15012892", record_id="x", cls="PublicToilet", name="화장실",
+              coords=[CENTER], dataset="전국공중화장실표준데이터", dist_center_km=0.0)
+    fc = export(build([t], {"near": [], "along": [], "in_park": [], "district": {}}), tmp_path / "p.geojson")
+    assert fc["features"][0]["properties"]["cat"] == "toilet"

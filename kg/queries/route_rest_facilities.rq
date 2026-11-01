@@ -1,4 +1,4 @@
-# 특정 경로(?routeName) 위·옆(100m 이내)의 휴게·운동시설
+# 특정 경로(?routeName) 위·옆(100m 이내)의 휴게·운동시설·화장실
 # 예: ?routeName = "오산천길"@ko
 PREFIX dt: <https://romanryu-rgb.github.io/dongtan-walk-map/ontology#>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>

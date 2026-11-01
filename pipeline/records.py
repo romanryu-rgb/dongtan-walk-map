@@ -2,7 +2,7 @@
 from dataclasses import dataclass, field
 
 ROUTE_CLASSES = {"WalkingTrail", "RunningCourse", "BikePath"}
-FACILITY_CLASSES = {"RestFacility", "ExerciseFacility", "Park"}
+FACILITY_CLASSES = {"RestFacility", "ExerciseFacility", "Park", "PublicToilet"}
 
 
 @dataclass

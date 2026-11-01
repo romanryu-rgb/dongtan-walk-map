@@ -40,7 +40,7 @@ node --test tests/web/logic.test.mjs
 장소 dt:Place
 ├─ 경로 dt:Route ── 산책로 dt:WalkingTrail / 런닝코스 dt:RunningCourse / 자전거도로 dt:BikePath
 └─ 시설 dt:Facility ── 휴게시설 dt:RestFacility / 운동시설 dt:ExerciseFacility / 공원 dt:Park
-                     └─ 생활편의시설 dt:Amenity  (확장 지점)
+                     └─ 생활편의시설 dt:Amenity ── 화장실 dt:PublicToilet  (여기에 계속 추가)
 ```
 
 모든 장소: `rdfs:label`(원본 이름), `skos:altLabel`(병합된 다른 이름), `dt:distanceFromCenterKm`,
@@ -54,13 +54,15 @@ node --test tests/web/logic.test.mjs
 ## 데이터 출처
 
 - 공공데이터포털 표준데이터: 전국도시공원정보, 전국실외운동기구설치정보, 전국그늘막쉼터, 전국무더위쉼터,
-  전국자전거도로, 전국길관광정보 (장소 이름은 원본 그대로 사용)
+  전국자전거도로, 전국길관광정보, 전국공중화장실 (장소 이름은 원본 그대로 사용)
 - © OpenStreetMap contributors (ODbL): 운동기구·벤치·쉼터·런닝 트랙·산책로·자전거길·행정동 경계 보충
 - 중심 좌표는 동탄순환대로22길(청계동 552 인근) 도로 중심점 근사값 — `pipeline/config.py` 의 `CENTER`
 
 ## 생활편의시설 추가 방법
 
-1. `ontology/dongtan.ttl` 에 `dt:Amenity` 하위 클래스 추가 (예: `dt:PublicToilet rdfs:subClassOf dt:Amenity`)
-2. `pipeline/sources.py` 의 `PUBLIC` 에 데이터셋 매핑 한 줄 추가 (예: 전국공중화장실표준데이터 pk `15012892`)
+화장실(`dt:PublicToilet`, 전국공중화장실표준데이터 pk `15012892`)이 첫 예시입니다. 같은 방법으로:
+
+1. `ontology/dongtan.ttl` 에 `dt:Amenity` 하위 클래스 추가
+2. `pipeline/sources.py` 의 `PUBLIC` 에 데이터셋 매핑 추가, `pipeline/records.py` 의 `FACILITY_CLASSES` 에 클래스 추가
 3. `pipeline/export_web.py` 의 `CAT`, `site/js/app.js` 의 `CAT`, `site/index.html` 칩에 분류 추가
 4. `python -m pipeline.run`

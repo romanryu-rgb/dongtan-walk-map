@@ -29,3 +29,7 @@ def test_core_properties_declared():
     for p in ["distanceFromCenterKm", "nearTo", "alongRoute", "locatedInPark", "inDistrict",
               "fromDataset", "hasProximity", "proximityTarget", "distanceM", "referenceDate"]:
         assert graph.query(PREFIX + f"ASK {{ dt:{p} a ?t }}").askAnswer, p
+
+
+def test_public_toilet_is_amenity():
+    assert g().query(PREFIX + "ASK { dt:PublicToilet rdfs:subClassOf dt:Amenity }").askAnswer

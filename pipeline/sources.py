@@ -27,6 +27,13 @@ PUBLIC = {
                      name="RTE_NM", id=None, addr=("ROAD_ST_POINT_ROAD_NM_ADDR", "ROAD_ST_POINT_LOTNO_ADDR"),
                      date="CRTR_YMD", category="BIKE_ROAD_TYPE", keep=(), info=(("주요경유지", "MAJOR_STOPOVER"),),
                      length="TOTAL_LENGTH"),
+    "15012892": dict(dataset="전국공중화장실표준데이터", cls="PublicToilet", lat="LATITUDE", lon="LONGITUDE",
+                     name="TOILET_NM", id=None, addr=("RDNMADR", "LNMADR"), date="REFERENCE_DATE",
+                     category="TOILET_TYPE", keep=(),
+                     info=(("개방시간", "OPEN_TIME"), ("남녀공용", "UNISEX_TOILET_YN"),
+                           ("남성 장애인용 대변기", "MEN_HANDICAP_TOILET_BOWL_NUMBER"),
+                           ("여성 장애인용 대변기", "LADIES_HANDICAP_TOILET_BOWL_NUMBER"),
+                           ("기저귀교환대", "DIPERS_EXCHG_POSI"), ("비상벨", "EMG_BELL_YN"))),
 }
 TRAIL_PK = "15017321"
 TRAIL_DATASET = "전국길관광정보표준데이터"

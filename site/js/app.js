@@ -7,6 +7,7 @@ const CAT = {
   exercise: { label: "운동시설", icon: "💪", color: "#dc2626" },
   rest: { label: "휴게시설", icon: "🪑", color: "#7c3aed" },
   park: { label: "공원", icon: "🌳", color: "#15803d" },
+  toilet: { label: "화장실", icon: "🚻", color: "#0e7490" },
 };
 const ALL = new Set(Object.keys(CAT));
 const LIST_LIMIT = 50;
