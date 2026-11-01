@@ -74,6 +74,8 @@ node --test tests/web/logic.test.mjs
   실제 걷는 길은 키가 필요 없는 공개 도보 경로 서버(routing.openstreetmap.de, OSRM)로 계산하고, 연결이 안 되면 직선거리(시속 4.5km)로 표시합니다.
 - **📝 메모**: 암호 key를 아는 사람만 지도 위 지점에 메모를 남기고 볼 수 있습니다. 메모는 AES-GCM으로 암호화되어 **그 기기 브라우저에만** 저장되고,
   "파일로 내보내기/가져오기"로 다른 기기에 옮깁니다(같은 key 필요).
-  - key 파일: `secrets/memo-key.txt` (이 PC에만 있음, git 제외). 새로 만들기: 기존 파일을 지우고 `python -m pipeline.memo_key` 실행 후 배포
+  - key 파일: `secrets/memo-key.txt` (이 PC에만 있음, git 제외). `#` 으로 시작하지 않는 첫 줄이 key입니다.
+  - key 바꾸기: 파일의 key 줄을 고친 뒤 `python -m pipeline.memo_key --apply` 실행 → 커밋·푸시하면 1분 안에 사이트에 반영
+  - 무작위 key 새로 만들기: 기존 파일을 지우고 `python -m pipeline.memo_key` 실행 후 배포
   - 사이트에는 key 대신 검증값(`site/data/memo-config.json`)만 공개됩니다. key를 바꾸면 이전 key로 저장한 메모는 열 수 없습니다.
 - **반경 선택**: 1~10km. 내 위치가 동탄 10km 안이면 내 위치 기준, 아니면 지도 중심 기준입니다.
