@@ -44,12 +44,15 @@ export function nextLocationMode(prevMode, userPos, center, { enterKm = 10, exit
 
 const ROUTE_CATS = new Set(["walk", "run", "bike"]);
 
-export function rankFeatures(features, { origin = null, cats, limit = 50, skipUnnamedRoutes = false }) {
+// 반경 기준점: 내 위치가 있으면 내 위치, 없으면 지도 중심(properties.d = 중심 거리)
+export function rankFeatures(features, { origin = null, cats, limit = 50, skipUnnamedRoutes = false, radiusKm = Infinity }) {
   const out = [];
   for (const f of features) {
     if (cats && !cats.has(f.properties.cat)) continue;
     if (skipUnnamedRoutes && !f.properties.name && ROUTE_CATS.has(f.properties.cat)) continue;
-    out.push({ f, dUserKm: origin ? featureDistanceKm(origin, f) : null });
+    const dUserKm = origin ? featureDistanceKm(origin, f) : null;
+    if ((origin ? dUserKm : f.properties.d) > radiusKm) continue;
+    out.push({ f, dUserKm });
   }
   out.sort((a, b) => (origin ? a.dUserKm - b.dUserKm : a.f.properties.d - b.f.properties.d));
   return out.slice(0, limit);
@@ -66,4 +69,12 @@ export function naverLinks({ name, lat, lon }) {
     app: `nmap://route/walk?dlat=${lat}&dlng=${lon}&dname=${n}&appname=io.github.romanryu_rgb.dongtan`,
     web: `https://map.naver.com/p/search/${n}`,
   };
+}
+
+export const RADIUS_DEFAULT_KM = 3;
+
+export function clampRadius(v) {
+  const n = Math.round(Number(v));
+  if (v === null || v === undefined || Number.isNaN(n)) return RADIUS_DEFAULT_KM;
+  return Math.min(10, Math.max(1, n));
 }

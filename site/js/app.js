@@ -1,4 +1,4 @@
-import { featureDistanceKm, formatDistance, naverLinks, nextLocationMode, rankFeatures } from "./logic.js";
+import { clampRadius, featureDistanceKm, formatDistance, haversineKm, naverLinks, nextLocationMode, rankFeatures } from "./logic.js";
 
 const CAT = {
   walk: { label: "산책로", icon: "🚶", color: "#16a34a" },
@@ -22,7 +22,12 @@ const latlonOf = (f) => {
   return [c[1], c[0]];
 };
 
-const state = { cats: new Set(ALL), mode: "center", userPos: null, features: [], byId: new Map(), layers: {}, center: null, toastShown: "" };
+const RADIUS_KEY = "dongtan.radiusKm";
+const savedRadius = () => { try { return localStorage.getItem(RADIUS_KEY); } catch { return null; } };
+const state = {
+  cats: new Set(ALL), mode: "center", userPos: null, features: [], byId: new Map(), layers: {}, layerOf: new Map(),
+  center: null, toastShown: "", radiusKm: clampRadius(savedRadius()), radiusCircle: null, lastRefPos: null,
+};
 
 // ── 지도 ──────────────────────────────────────────
 const map = L.map("map", { zoomControl: false, preferCanvas: true });
@@ -56,9 +61,34 @@ function buildLayers() {
       layer = L.marker(latlonOf(f), { icon: pinIcon(p.cat), title: displayName(p) });
     }
     layer.on("click", () => showDetail(p.id));
-    state.layers[p.cat].addLayer(layer);
+    state.layerOf.set(p.id, layer);
   }
   applyLayers();
+  refreshMap();
+}
+
+// 반경 기준점: 내 위치 모드면 내 위치, 아니면 지도 중심
+function refPos() { return origin() || state.center; }
+
+function refreshMap() {
+  const visible = rankFeatures(state.features, { origin: origin(), limit: Infinity, radiusKm: state.radiusKm });
+  for (const layer of Object.values(state.layers)) layer.clearLayers();
+  for (const { f } of visible) state.layers[f.properties.cat].addLayer(state.layerOf.get(f.properties.id));
+  const ref = refPos();
+  state.lastRefPos = ref;
+  if (!state.radiusCircle) {
+    state.radiusCircle = L.circle(ref, { radius: 1, color: "#0f766e", weight: 2, fillColor: "#14b8a6", fillOpacity: 0.05, interactive: false }).addTo(map);
+  }
+  state.radiusCircle.setLatLng(ref).setRadius(state.radiusKm * 1000);
+}
+
+function setRadius(km, { fit = true } = {}) {
+  state.radiusKm = clampRadius(km);
+  try { localStorage.setItem(RADIUS_KEY, String(state.radiusKm)); } catch { /* 저장 불가 환경 */ }
+  $("#radius").value = String(state.radiusKm);
+  refreshMap();
+  renderList();
+  if (fit) map.fitBounds(state.radiusCircle.getBounds(), { padding: [20, 20] });
 }
 
 function applyLayers() {
@@ -71,9 +101,10 @@ function applyLayers() {
 function origin() { return state.mode === "user" ? state.userPos : null; }
 
 function renderList() {
-  const ranked = rankFeatures(state.features, { origin: origin(), cats: state.cats, limit: LIST_LIMIT, skipUnnamedRoutes: true });
-  $("#list-title").textContent = state.mode === "user" ? "내 주변 가까운 순" : "중심에서 가까운 순";
-  const total = rankFeatures(state.features, { cats: state.cats, limit: Infinity, skipUnnamedRoutes: true }).length;
+  const opts = { origin: origin(), cats: state.cats, skipUnnamedRoutes: true, radiusKm: state.radiusKm };
+  const ranked = rankFeatures(state.features, { ...opts, limit: LIST_LIMIT });
+  $("#list-title").textContent = state.mode === "user" ? `내 주변 ${state.radiusKm}km · 가까운 순` : `중심 ${state.radiusKm}km · 가까운 순`;
+  const total = rankFeatures(state.features, { ...opts, limit: Infinity }).length;
   $("#list-count").textContent = total > LIST_LIMIT ? `${LIST_LIMIT} / ${total}곳` : `${total}곳`;
   $("#list").innerHTML = ranked.map(({ f, dUserKm }) => {
     const p = f.properties;
@@ -222,6 +253,8 @@ function updateMode(pos) {
     if (pos) toast("현재 위치가 동탄 중심에서 10km 이상 떨어져 있어 중심 기준으로 보여 드립니다.");
     else toast("위치를 확인할 수 없어 지도 중심(청계동 552) 기준으로 보여 드립니다.");
   }
+  const moved = state.lastRefPos && haversineKm(state.lastRefPos, refPos()) > 0.1;
+  if (prev !== state.mode || moved) refreshMap(); // 100m 넘게 움직였을 때만 지도 다시 거르기
   if (prev !== state.mode || state.mode === "user") renderList();
 }
 
@@ -249,6 +282,8 @@ async function main() {
   map.setView(state.center, 14);
   L.circle(state.center, { radius: fc.meta.radiusKm * 1000, color: "#64748b", weight: 1.5, dashArray: "6 6", fill: false, interactive: false }).addTo(map);
   L.marker(state.center, { icon: L.divIcon({ className: "", html: '<div class="center-pin">🏁</div>', iconSize: [24, 24], iconAnchor: [4, 22] }), title: fc.meta.centerLabel }).addTo(map);
+  $("#radius").value = String(state.radiusKm);
+  $("#radius").addEventListener("change", (e) => setRadius(e.target.value));
   buildLayers();
   renderList();
   startGeolocation();

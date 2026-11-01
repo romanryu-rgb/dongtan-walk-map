@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
-  haversineKm, featureDistanceKm, nextLocationMode, rankFeatures, formatDistance, naverLinks,
+  haversineKm, featureDistanceKm, nextLocationMode, rankFeatures, formatDistance, naverLinks, clampRadius,
 } from "../../site/js/logic.js";
 
 const C = [37.19757, 127.11996];
@@ -74,4 +74,24 @@ test("rankFeatures can skip unnamed routes for the list", () => {
   const fs = [line("u", ""), line("n", "동탄대로L"), { ...pt("b", "rest", 0.1, north(0.1)), properties: { id: "b", cat: "rest", d: 0.1, name: "" } }];
   const r = rankFeatures(fs, { origin: null, cats: new Set(["bike", "rest"]), limit: 50, skipUnnamedRoutes: true });
   assert.deepEqual(r.map((x) => x.f.properties.id).sort(), ["b", "n"]);
+});
+
+test("rankFeatures radius around user position", () => {
+  const fs = [pt("a", "rest", 5, north(5)), pt("b", "rest", 3, north(3)), pt("c", "rest", 1, north(1))];
+  const r = rankFeatures(fs, { origin: north(4.5), cats: new Set(["rest"]), limit: 50, radiusKm: 1 });
+  assert.deepEqual(r.map((x) => x.f.properties.id), ["a"]);
+});
+
+test("rankFeatures radius around center uses center distance when no position", () => {
+  const fs = [pt("a", "rest", 5, north(5)), pt("b", "rest", 2.9, north(2.9)), pt("c", "rest", 1, north(1))];
+  const r = rankFeatures(fs, { origin: null, cats: new Set(["rest"]), limit: 50, radiusKm: 3 });
+  assert.deepEqual(r.map((x) => x.f.properties.id), ["c", "b"]);
+});
+
+test("clampRadius keeps 1..10 whole km and defaults to 3", () => {
+  assert.equal(clampRadius("5"), 5);
+  assert.equal(clampRadius(0), 1);
+  assert.equal(clampRadius(42), 10);
+  assert.equal(clampRadius("abc"), 3);
+  assert.equal(clampRadius(null), 3);
 });
