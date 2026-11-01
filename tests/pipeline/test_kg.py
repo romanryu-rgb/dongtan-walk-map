@@ -68,3 +68,9 @@ def test_export_geojson_from_graph(tmp_path):
     assert feats["std-15017321/T1"]["properties"]["cat"] == "walk"
     assert feats["std-15012890/P1"]["properties"]["dong"] == "청계동"
     assert fc["meta"]["center"] == list(CENTER) and fc["meta"]["radiusKm"] == 10.0
+
+
+def test_export_keeps_one_feature_per_place(tmp_path):
+    places, rels = sample()
+    fc = export(build(places, rels), tmp_path / "p.geojson")
+    assert len(fc["features"]) == len(places)

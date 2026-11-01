@@ -1,4 +1,5 @@
 """10km 필터, 시설 중복 병합, 공공 자전거도로에 OSM 선 모양 붙이기."""
+import hashlib
 import re
 from collections import defaultdict
 
@@ -23,6 +24,25 @@ def drop_oversized(places, max_km=50.0):
             if max(haversine_m(*config.CENTER, *c) for c in p.coords) / 1000 <= max_km]
 
 
+def unique_ids(places):
+    """원본 ID가 겹치는 레코드(예: 공원 관리번호 중복)를 구분한다. 이름·좌표까지 같으면 완전 중복으로 버린다."""
+    seen = {}
+    out = []
+    for p in places:
+        sig = (p.name, tuple(p.coords))
+        if p.id not in seen:
+            seen[p.id] = {sig}
+            out.append(p)
+            continue
+        if sig in seen[p.id]:
+            continue
+        seen[p.id].add(sig)
+        h = hashlib.sha1(f"{p.name}|{p.coords}".encode("utf-8")).hexdigest()[:6]
+        p.id, p.record_id = f"{p.id}-{h}", f"{p.record_id}-{h}"
+        out.append(p)
+    return out
+
+
 def _cell(lat, lon, size=0.0005):
     return int(lat / size), int(lon / size)
 
@@ -43,7 +63,8 @@ def dedupe(places):
         for dy in (-1, 0, 1):
             for dx in (-1, 0, 1):
                 for q in grid[(cy + dy, cx + dx)]:
-                    if q.cls == p.cls and haversine_m(lat, lon, *q.coords[0]) <= config.MERGE_M:
+                    # 같은 데이터셋 안의 서로 다른 레코드는 다른 장소로 본다(병합은 출처가 다를 때만)
+                    if q.cls == p.cls and q.source != p.source and haversine_m(lat, lon, *q.coords[0]) <= config.MERGE_M:
                         target = q
                         break
         if target is None:

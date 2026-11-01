@@ -31,7 +31,7 @@ def main(refresh=False):
     bikes = [p for p in places if p.cls == "BikePath"]
     bikes, osm["cycleway"] = merge.attach_bike_lines(bikes, osm["cycleway"])
     print(f"[병합] 공공 자전거도로 {len(bikes)} 중 OSM 선 매칭 {sum('line_from_osm' in b.extra for b in bikes)}")
-    all_places = merge.dedupe(places + [p for v in osm.values() for p in v])
+    all_places = merge.dedupe(merge.unique_ids(places + [p for v in osm.values() for p in v]))
     print(f"[10km·병합 후] {len(all_places)}")
 
     districts = relations.load_districts(fetch_osm.query("districts", refresh=refresh))

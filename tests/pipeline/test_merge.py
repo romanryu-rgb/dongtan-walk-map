@@ -69,3 +69,21 @@ def test_national_scale_route_dropped():
     huge = P("h", cls="WalkingTrail", coords=[north(0), north(300000)])
     ok = P("o", cls="WalkingTrail", coords=[north(0), north(12000)])
     assert [p.id for p in drop_oversized([huge, ok])] == ["o"]
+
+
+def test_same_dataset_records_within_30m_are_not_merged():
+    a = P("a", name="중앙-13", coords=[north(100)])
+    b = P("b", name="중앙-10", coords=[north(105)])
+    out = dedupe([a, b])
+    assert len(out) == 2 and out[0].alt_names == []
+
+
+def test_duplicate_source_ids_get_distinct_ids_and_exact_duplicates_dropped():
+    from pipeline.merge import unique_ids
+    p1 = P("std-1-X", name="가공원", coords=[north(100)])
+    p2 = P("std-1-X", name="나공원", coords=[north(5000)])
+    p3 = P("std-1-X", name="가공원", coords=[north(100)])
+    out = unique_ids([p1, p2, p3])
+    assert len(out) == 2
+    assert len({p.id for p in out}) == 2 and len({p.record_id for p in out}) == 2
+    assert out[0].id == "std-1-X"
