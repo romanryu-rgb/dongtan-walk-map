@@ -95,3 +95,9 @@ test("clampRadius keeps 1..10 whole km and defaults to 3", () => {
   assert.equal(clampRadius("abc"), 3);
   assert.equal(clampRadius(null), 3);
 });
+
+test("unnamed hiking trails are skipped from the list too", () => {
+  const f = { type: "Feature", properties: { id: "h", cat: "hike", d: 1, name: "" },
+    geometry: { type: "LineString", coordinates: [[C[1], C[0]], [C[1] + 0.001, C[0]]] } };
+  assert.equal(rankFeatures([f], { cats: new Set(["hike"]), skipUnnamedRoutes: true }).length, 0);
+});

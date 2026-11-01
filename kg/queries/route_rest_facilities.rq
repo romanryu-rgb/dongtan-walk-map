@@ -4,7 +4,7 @@ PREFIX dt: <https://romanryu-rgb.github.io/dongtan-walk-map/ontology#>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 SELECT ?facility ?type ?name WHERE {
   ?route a ?rc ; rdfs:label ?routeName ; dt:hasRouteFacility ?facility .
-  VALUES ?rc { dt:WalkingTrail dt:RunningCourse dt:BikePath }
+  VALUES ?rc { dt:WalkingTrail dt:RunningCourse dt:BikePath dt:HikingTrail }
   ?facility a ?type . VALUES ?type { dt:RestFacility dt:ExerciseFacility }
   OPTIONAL { ?facility rdfs:label ?name }
 }

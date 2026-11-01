@@ -1,7 +1,7 @@
 """모든 소스를 정규화한 공통 장소 레코드."""
 from dataclasses import dataclass, field
 
-ROUTE_CLASSES = {"WalkingTrail", "RunningCourse", "BikePath"}
+ROUTE_CLASSES = {"WalkingTrail", "RunningCourse", "BikePath", "HikingTrail"}
 FACILITY_CLASSES = {"RestFacility", "ExerciseFacility", "Park", "PublicToilet"}
 
 

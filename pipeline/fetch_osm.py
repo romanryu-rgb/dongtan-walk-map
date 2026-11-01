@@ -14,7 +14,10 @@ QUERIES = {
     "fitness": f'nwr({_A})[leisure=fitness_station];out center tags;',
     "rest": f'(node({_A})[amenity=bench];node({_A})[amenity=shelter];node({_A})[leisure=picnic_table];);out body;',
     "running": f'(way({_A})[leisure=track][sport~"running|athletics"];relation({_A})[route=running];);out geom;',
-    "walking": f'(relation({_A})[route~"^(hiking|foot)$"];way({_A})[highway~"^(footway|path)$"][name];);out geom;',
+    "walking": f'(relation({_A})[route=foot];way({_A})[highway=footway][name];);out geom;',
+    # 산길(highway=path)은 모두 여기서 받고, 이름·포장 여부로 등산로/산책로를 나눈다(sources.osm_places)
+    "hiking": f'(relation({_A})[route=hiking];way({_A})[highway=path][bicycle!=designated];);out geom;',
+    "peaks": f'node({_A})[natural=peak][name];out body;',
     "cycleway": f'(way({_A})[highway=cycleway];way({_A})[bicycle=designated][highway~"^(path|footway)$"];);out tags geom;',
     "districts": f'relation({_A})[boundary=administrative][admin_level=8];out geom;',
 }

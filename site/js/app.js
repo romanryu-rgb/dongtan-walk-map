@@ -4,6 +4,7 @@ const CAT = {
   walk: { label: "산책로", icon: "🚶", color: "#16a34a" },
   run: { label: "런닝코스", icon: "🏃", color: "#f97316" },
   bike: { label: "자전거도로", icon: "🚲", color: "#2563eb" },
+  hike: { label: "등산로", icon: "⛰️", color: "#92400e" },
   exercise: { label: "운동시설", icon: "💪", color: "#dc2626" },
   rest: { label: "휴게시설", icon: "🪑", color: "#7c3aed" },
   park: { label: "공원", icon: "🌳", color: "#15803d" },
@@ -44,7 +45,7 @@ function pinIcon(cat) {
 
 function buildLayers() {
   for (const cat of Object.keys(CAT)) {
-    state.layers[cat] = ["walk", "run", "bike"].includes(cat)
+    state.layers[cat] = ["walk", "run", "bike", "hike"].includes(cat)
       ? L.layerGroup()
       : L.markerClusterGroup({ showCoverageOnHover: false, maxClusterRadius: 45, disableClusteringAtZoom: 17 });
   }
@@ -53,9 +54,10 @@ function buildLayers() {
     const c = CAT[p.cat];
     let layer;
     if (f.geometry.type === "LineString") {
-      layer = L.polyline(f.geometry.coordinates.map(([lon, lat]) => [lat, lon]),
-        { color: c.color, weight: p.cat === "bike" ? 2.5 : 5, opacity: p.cat === "bike" ? 0.55 : 0.85 });
-    } else if (["walk", "run", "bike"].includes(p.cat)) {
+      const style = p.cat === "bike" ? { weight: 2.5, opacity: 0.55 }
+        : p.cat === "hike" ? { weight: 3.5, opacity: 0.8, dashArray: "6 5" } : { weight: 5, opacity: 0.85 };
+      layer = L.polyline(f.geometry.coordinates.map(([lon, lat]) => [lat, lon]), { color: c.color, ...style });
+    } else if (["walk", "run", "bike", "hike"].includes(p.cat)) {
       layer = L.marker(latlonOf(f), { icon: pinIcon(p.cat), title: displayName(p) }); // 시작점만 있는 경로
     } else {
       layer = L.marker(latlonOf(f), { icon: pinIcon(p.cat), title: displayName(p) });

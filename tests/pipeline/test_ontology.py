@@ -33,3 +33,9 @@ def test_core_properties_declared():
 
 def test_public_toilet_is_amenity():
     assert g().query(PREFIX + "ASK { dt:PublicToilet rdfs:subClassOf dt:Amenity }").askAnswer
+
+
+def test_hiking_trail_is_route_and_peak_is_place():
+    graph = g()
+    assert graph.query(PREFIX + "ASK { dt:HikingTrail rdfs:subClassOf dt:Route }").askAnswer
+    assert graph.query(PREFIX + "ASK { dt:Peak rdfs:subClassOf dt:Place }").askAnswer

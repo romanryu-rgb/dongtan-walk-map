@@ -17,6 +17,10 @@ dt:Route a owl:Class ; rdfs:subClassOf dt:Place ; rdfs:label "경로"@ko .
 dt:WalkingTrail a owl:Class ; rdfs:subClassOf dt:Route ; rdfs:label "산책로"@ko .
 dt:RunningCourse a owl:Class ; rdfs:subClassOf dt:Route ; rdfs:label "런닝코스"@ko .
 dt:BikePath a owl:Class ; rdfs:subClassOf dt:Route ; rdfs:label "자전거도로"@ko .
+dt:HikingTrail a owl:Class ; rdfs:subClassOf dt:Route ; rdfs:label "등산로"@ko .
+
+dt:Peak a owl:Class ; rdfs:subClassOf dt:Place ; rdfs:label "산 정상"@ko ;
+    rdfs:comment "등산로 탐색을 돕는 이름 있는 산 정상(OSM natural=peak)."@ko .
 
 dt:Facility a owl:Class ; rdfs:subClassOf dt:Place ; rdfs:label "시설"@ko .
 dt:RestFacility a owl:Class ; rdfs:subClassOf dt:Facility ; rdfs:label "휴게시설"@ko .

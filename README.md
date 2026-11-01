@@ -38,7 +38,8 @@ node --test tests/web/logic.test.mjs
 
 ```
 장소 dt:Place
-├─ 경로 dt:Route ── 산책로 dt:WalkingTrail / 런닝코스 dt:RunningCourse / 자전거도로 dt:BikePath
+├─ 경로 dt:Route ── 산책로 dt:WalkingTrail / 런닝코스 dt:RunningCourse / 자전거도로 dt:BikePath / 등산로 dt:HikingTrail
+├─ 산 정상 dt:Peak
 └─ 시설 dt:Facility ── 휴게시설 dt:RestFacility / 운동시설 dt:ExerciseFacility / 공원 dt:Park
                      └─ 생활편의시설 dt:Amenity ── 화장실 dt:PublicToilet  (여기에 계속 추가)
 ```

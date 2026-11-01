@@ -1,5 +1,6 @@
 """데이터셋 행 → Place 변환. 이름은 원본 그대로(앞뒤 공백만 제거)."""
 import hashlib
+import re
 
 from .records import Place
 
@@ -117,10 +118,22 @@ def trail_places(data, geocode):
 
 
 OSM_CLASS = {"fitness": "ExerciseFacility", "rest": "RestFacility", "running": "RunningCourse",
-             "walking": "WalkingTrail", "cycleway": "BikePath"}
+             "walking": "WalkingTrail", "cycleway": "BikePath", "hiking": "HikingTrail", "peaks": "Peak"}
+HIKE_NAME = re.compile(r"등산|정맥|능선|산$|봉$|산길")
+PAVED = {"paving_stones", "asphalt", "concrete", "paved", "sett", "concrete:plates", "wood"}
+
+
+def _hiking_class(el, tags):
+    """산길 분류: hiking relation·등산 이름·비포장 무명길 → 등산로, 그 밖의 이름 있는 길(둘레길 등)·포장길 → 산책로."""
+    if el["type"] == "relation":
+        return "HikingTrail"
+    name = (tags.get("name") or "").strip()
+    if name:
+        return "HikingTrail" if HIKE_NAME.search(name) else "WalkingTrail"
+    return "WalkingTrail" if tags.get("surface") in PAVED else "HikingTrail"
 OSM_CATEGORY = {("amenity", "bench"): "벤치", ("amenity", "shelter"): "쉼터",
                 ("leisure", "picnic_table"): "피크닉 테이블", ("leisure", "fitness_station"): "운동기구",
-                ("leisure", "track"): "트랙"}
+                ("leisure", "track"): "트랙", ("natural", "peak"): "산 정상"}
 
 
 def _osm_coords(el):
@@ -151,6 +164,10 @@ def osm_places(name, data):
             coords = [(lat, lon)]
         rid = f"{el['type']}-{el['id']}"
         category = next((v for (k, val), v in OSM_CATEGORY.items() if tags.get(k) == val), "")
-        out.append(Place(id=f"osm-{rid}", source="osm", record_id=rid, cls=cls, name=(tags.get("name") or "").strip(),
-                         coords=coords, dataset=OSM_DATASET, extra={"category": category, "osm_tags": tags}))
+        extra = {"category": category, "osm_tags": tags}
+        if tags.get("ele"):
+            extra["facility_info"] = f"해발 {tags['ele']}m"
+        out.append(Place(id=f"osm-{rid}", source="osm", record_id=rid,
+                         cls=_hiking_class(el, tags) if name == "hiking" else cls,
+                         name=(tags.get("name") or "").strip(), coords=coords, dataset=OSM_DATASET, extra=extra))
     return out

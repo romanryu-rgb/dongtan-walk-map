@@ -42,7 +42,7 @@ export function nextLocationMode(prevMode, userPos, center, { enterKm = 10, exit
   return d < enterKm ? "user" : "center";
 }
 
-const ROUTE_CATS = new Set(["walk", "run", "bike"]);
+const ROUTE_CATS = new Set(["walk", "run", "bike", "hike"]);
 
 // 반경 기준점: 내 위치가 있으면 내 위치, 없으면 지도 중심(properties.d = 중심 거리)
 export function rankFeatures(features, { origin = null, cats, limit = 50, skipUnnamedRoutes = false, radiusKm = Infinity }) {

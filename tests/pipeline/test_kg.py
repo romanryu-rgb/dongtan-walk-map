@@ -81,3 +81,12 @@ def test_toilet_exported_with_toilet_category(tmp_path):
               coords=[CENTER], dataset="전국공중화장실표준데이터", dist_center_km=0.0)
     fc = export(build([t], {"near": [], "along": [], "in_park": [], "district": {}}), tmp_path / "p.geojson")
     assert fc["features"][0]["properties"]["cat"] == "toilet"
+
+
+def test_hiking_trail_and_peak_export_as_hike(tmp_path):
+    t = Place(id="osm-way-1", source="osm", record_id="way-1", cls="HikingTrail", name="한남정맥",
+              coords=[CENTER, (CENTER[0] + 0.01, CENTER[1])], dataset="OpenStreetMap", dist_center_km=0.0)
+    k = Place(id="osm-node-2", source="osm", record_id="node-2", cls="Peak", name="무봉산",
+              coords=[CENTER], dataset="OpenStreetMap", dist_center_km=0.0)
+    fc = export(build([t, k], {"near": [], "along": [], "in_park": [], "district": {}}), tmp_path / "p.geojson")
+    assert sorted(f["properties"]["cat"] for f in fc["features"]) == ["hike", "hike"]

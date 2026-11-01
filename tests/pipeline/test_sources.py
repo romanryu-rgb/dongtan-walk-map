@@ -159,3 +159,35 @@ def test_toilet_row_maps_to_public_toilet():
     assert "개방시간: 24시간" in p.extra["facility_info"]
     assert "기저귀교환대: 여자화장실" in p.extra["facility_info"]
     assert not p.is_route
+
+
+def _way(id, tags):
+    return {"type": "way", "id": id, "tags": tags, "geometry": [{"lat": 37.2, "lon": 127.1}, {"lat": 37.201, "lon": 127.1}]}
+
+
+def test_hiking_source_classifies_mountain_paths_and_walks():
+    data = {"elements": [
+        _way(1, {"highway": "path", "name": "한남정맥"}),
+        _way(2, {"highway": "path", "name": "용뫼산 등산로"}),
+        _way(3, {"highway": "path", "surface": "dirt"}),
+        _way(4, {"highway": "path", "name": "동탄 둘레길"}),
+        _way(5, {"highway": "path", "surface": "paving_stones"}),
+        {"type": "relation", "id": 6, "tags": {"route": "hiking", "name": "무봉산 등산로"},
+         "members": [{"type": "way", "geometry": [{"lat": 37.2, "lon": 127.1}, {"lat": 37.21, "lon": 127.1}]}]}]}
+    got = {p.record_id: p.cls for p in osm_places("hiking", data)}
+    assert got == {"way-1": "HikingTrail", "way-2": "HikingTrail", "way-3": "HikingTrail",
+                   "way-4": "WalkingTrail", "way-5": "WalkingTrail", "relation-6": "HikingTrail"}
+
+
+def test_peak_node_maps_to_peak_with_elevation():
+    data = {"elements": [{"type": "node", "id": 8, "lat": 37.18, "lon": 127.12,
+                          "tags": {"natural": "peak", "name": "무봉산", "ele": "360"}}]}
+    [p] = osm_places("peaks", data)
+    assert p.cls == "Peak" and p.name == "무봉산" and p.extra["category"] == "산 정상"
+    assert "해발 360m" in p.extra["facility_info"] and not p.is_route
+
+
+def test_walking_query_no_longer_takes_hiking_relations():
+    from pipeline.fetch_osm import QUERIES
+    assert "hiking" not in QUERIES["walking"] and "route=hiking" in QUERIES["hiking"]
+    assert "natural=peak" in QUERIES["peaks"]
