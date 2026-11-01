@@ -23,7 +23,9 @@ ONTOLOGY_PATH = ROOT / "ontology" / "dongtan.ttl"
 WEB_DATA_PATH = ROOT / "site" / "data" / "places.geojson"
 
 USER_AGENT = "dongtan-walk-map/0.1 (github.com/romanryu-rgb)"
-OVERPASS_URL = "https://overpass-api.de/api/interpreter"
+OVERPASS_URLS = ["https://overpass-api.de/api/interpreter",
+                 "https://overpass.private.coffee/api/interpreter",
+                 "https://overpass.kumi.systems/api/interpreter"]
 NOMINATIM_URL = "https://nominatim.openstreetmap.org/search"
 STD_HEADER_URL = "https://www.data.go.kr/download/columList.json?pk={pk}&ext=JSON"
 STD_DATA_URL = "https://www.data.go.kr/download/standard.json"
