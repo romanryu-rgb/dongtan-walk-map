@@ -79,4 +79,5 @@ node --test tests/web/logic.test.mjs
   - key 바꾸기: 파일의 key 줄을 고친 뒤 `python -m pipeline.memo_key --apply` 실행 → 커밋·푸시하면 1분 안에 사이트에 반영
   - 무작위 key 새로 만들기: 기존 파일을 지우고 `python -m pipeline.memo_key` 실행 후 배포
   - 사이트에는 key 대신 검증값(`site/data/memo-config.json`)만 공개됩니다. key를 바꾸면 이전 key로 저장한 메모는 열 수 없습니다.
+- **❓ 사용법**: 오른쪽 ? 버튼으로 사용법 팝업을 엽니다. 처음 방문할 때 한 번 자동으로 열립니다(`site/js/help.js`, 내용을 크게 바꾸면 `HELP_VERSION`을 올리면 다시 한 번 자동으로 뜸).
 - **반경 선택**: 1~10km. 내 위치가 동탄 10km 안이면 내 위치 기준, 아니면 지도 중심 기준입니다.

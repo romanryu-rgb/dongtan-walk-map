@@ -39,6 +39,7 @@
   </nav>
 
   <button id="locate" class="fab" aria-label="내 위치로" title="내 위치로" hidden>◎</button>
+  <button id="help-btn" class="fab" aria-label="사용법" title="사용법 보기">?</button>
   <button id="measure-btn" class="fab" aria-label="거리 재기" title="거리 재기(출발·경유·도착)">📏</button>
   <button id="memo-btn" class="fab" aria-label="메모" title="메모(암호 key 필요)">📝</button>
   <button id="home" class="fab" aria-label="지도 중심으로" title="지도 중심(청계동 552)으로">🏁</button>
@@ -59,6 +60,15 @@
       데이터: 공공데이터포털 표준데이터, OpenStreetMap(ODbL) · <span id="built"></span>
     </footer>
   </section>
+
+  <dialog id="help" aria-labelledby="help-title">
+    <div class="help-head">
+      <h2 id="help-title">사용법</h2>
+      <button id="help-close" aria-label="닫기">✕</button>
+    </div>
+    <div id="help-body"></div>
+    <div class="help-foot"><button id="help-ok">확인</button></div>
+  </dialog>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>

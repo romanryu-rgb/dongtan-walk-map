@@ -1,5 +1,6 @@
 import { clampRadius, featureDistanceKm, formatDistance, haversineKm, naverLinks, nextLocationMode, rankFeatures } from "./logic.js";
 import { initTools } from "./tools.js";
+import { initHelp } from "./help.js";
 
 const CAT = {
   walk: { label: "산책로", icon: "🚶", color: "#16a34a" },
@@ -306,6 +307,7 @@ async function main() {
   renderList();
   startGeolocation();
   initTools({ map, $, esc, toast, setSheet, showPanel, hidePanel });
+  initHelp($);
 }
 
 main().catch((err) => {
