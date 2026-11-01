@@ -133,6 +133,8 @@ def osm_places(name, data):
     out = []
     for el in data["elements"]:
         tags = el.get("tags", {})
+        if cls == "WalkingTrail" and tags.get("footway") in ("sidewalk", "crossing"):
+            continue  # 도로 인도·횡단보도는 산책로가 아님
         coords = [c for c in _osm_coords(el) if valid_coord(*c)]
         if not coords:
             continue

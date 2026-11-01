@@ -26,8 +26,8 @@ def main(refresh=False):
         osm[name] = sources.osm_places(name, fetch_osm.query(name, refresh=refresh))
         print(f"[OSM] {name}: {len(osm[name])}")
 
-    places = merge.within_radius(places)
-    osm = {k: merge.within_radius(v) for k, v in osm.items()}
+    places = merge.drop_oversized(merge.within_radius(places))
+    osm = {k: merge.drop_oversized(merge.within_radius(v)) for k, v in osm.items()}
     bikes = [p for p in places if p.cls == "BikePath"]
     bikes, osm["cycleway"] = merge.attach_bike_lines(bikes, osm["cycleway"])
     print(f"[병합] 공공 자전거도로 {len(bikes)} 중 OSM 선 매칭 {sum('line_from_osm' in b.extra for b in bikes)}")

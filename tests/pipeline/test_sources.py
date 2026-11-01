@@ -137,3 +137,12 @@ def test_timeouts_are_retried(monkeypatch, tmp_path):
     monkeypatch.setattr(fo.config, "RAW_DIR", tmp_path)
     assert fo.query("x", "node(1);out;", refresh=True) == {"elements": []}
     assert len(calls) == 2 and calls[0] != calls[1]
+
+
+def test_osm_sidewalks_and_crossings_are_not_trails():
+    geom = [{"lat": 37.2, "lon": 127.1}, {"lat": 37.201, "lon": 127.1}]
+    data = {"elements": [
+        {"type": "way", "id": 1, "tags": {"highway": "footway", "footway": "sidewalk", "name": "동탄오산로"}, "geometry": geom},
+        {"type": "way", "id": 2, "tags": {"highway": "footway", "footway": "crossing", "name": "동탄오산로"}, "geometry": geom},
+        {"type": "way", "id": 3, "tags": {"highway": "path", "name": "동탄 둘레길"}, "geometry": geom}]}
+    assert [p.name for p in osm_places("walking", data)] == ["동탄 둘레길"]

@@ -67,3 +67,11 @@ test("naverLinks encodes name", () => {
   assert.equal(l.app, "nmap://route/walk?dlat=37.2&dlng=127.1&dname=%EC%97%AC%EC%9A%B8%20%EA%B3%B5%EC%9B%90&appname=io.github.romanryu_rgb.dongtan");
   assert.equal(l.web, "https://map.naver.com/p/search/%EC%97%AC%EC%9A%B8%20%EA%B3%B5%EC%9B%90");
 });
+
+test("rankFeatures can skip unnamed routes for the list", () => {
+  const line = (id, name) => ({ type: "Feature", properties: { id, cat: "bike", d: 1, name },
+    geometry: { type: "LineString", coordinates: [[C[1], C[0]], [C[1] + 0.001, C[0]]] } });
+  const fs = [line("u", ""), line("n", "동탄대로L"), { ...pt("b", "rest", 0.1, north(0.1)), properties: { id: "b", cat: "rest", d: 0.1, name: "" } }];
+  const r = rankFeatures(fs, { origin: null, cats: new Set(["bike", "rest"]), limit: 50, skipUnnamedRoutes: true });
+  assert.deepEqual(r.map((x) => x.f.properties.id).sort(), ["b", "n"]);
+});

@@ -48,7 +48,7 @@ function buildLayers() {
     let layer;
     if (f.geometry.type === "LineString") {
       layer = L.polyline(f.geometry.coordinates.map(([lon, lat]) => [lat, lon]),
-        { color: c.color, weight: p.cat === "bike" ? 3 : 5, opacity: 0.8 });
+        { color: c.color, weight: p.cat === "bike" ? 2.5 : 5, opacity: p.cat === "bike" ? 0.55 : 0.85 });
     } else if (["walk", "run", "bike"].includes(p.cat)) {
       layer = L.marker(latlonOf(f), { icon: pinIcon(p.cat), title: displayName(p) }); // 시작점만 있는 경로
     } else {
@@ -70,9 +70,9 @@ function applyLayers() {
 function origin() { return state.mode === "user" ? state.userPos : null; }
 
 function renderList() {
-  const ranked = rankFeatures(state.features, { origin: origin(), cats: state.cats, limit: LIST_LIMIT });
+  const ranked = rankFeatures(state.features, { origin: origin(), cats: state.cats, limit: LIST_LIMIT, skipUnnamedRoutes: true });
   $("#list-title").textContent = state.mode === "user" ? "내 주변 가까운 순" : "중심에서 가까운 순";
-  const total = state.features.filter((f) => state.cats.has(f.properties.cat)).length;
+  const total = rankFeatures(state.features, { cats: state.cats, limit: Infinity, skipUnnamedRoutes: true }).length;
   $("#list-count").textContent = total > LIST_LIMIT ? `${LIST_LIMIT} / ${total}곳` : `${total}곳`;
   $("#list").innerHTML = ranked.map(({ f, dUserKm }) => {
     const p = f.properties;
@@ -142,6 +142,7 @@ function showDetail(id) {
     <button class="naver" data-nav="${esc(p.id)}">네이버 지도에서 길찾기</button>
     <dl>${rows.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join("")}</dl>`;
   $("#list").hidden = true;
+  $("#sheet-head").hidden = true;
   $("#detail").hidden = false;
   $("#detail").scrollTop = 0;
   setSheet("half");
@@ -153,7 +154,7 @@ function showDetail(id) {
 }
 
 $("#detail").addEventListener("click", (e) => {
-  if (e.target.closest("[data-back]")) { $("#detail").hidden = true; $("#list").hidden = false; return; }
+  if (e.target.closest("[data-back]")) { $("#detail").hidden = true; $("#list").hidden = false; $("#sheet-head").hidden = false; return; }
   const nav = e.target.closest("[data-nav]");
   if (nav) { openNaver(nav.dataset.nav); return; }
   const go = e.target.closest("[data-go]");
@@ -225,6 +226,8 @@ function updateMode(pos) {
 
 function startGeolocation() {
   if (!("geolocation" in navigator)) { updateMode(null); return; }
+  // 권한 창에 응답하지 않으면 콜백이 오지 않으므로 12초 뒤 중심 기준 안내
+  setTimeout(() => { if (!state.userPos) updateMode(null); }, 12000);
   navigator.geolocation.watchPosition(
     (p) => updateMode([p.coords.latitude, p.coords.longitude]),
     () => { if (state.mode !== "user") updateMode(null); },

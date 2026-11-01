@@ -42,10 +42,13 @@ export function nextLocationMode(prevMode, userPos, center, { enterKm = 10, exit
   return d < enterKm ? "user" : "center";
 }
 
-export function rankFeatures(features, { origin = null, cats, limit = 50 }) {
+const ROUTE_CATS = new Set(["walk", "run", "bike"]);
+
+export function rankFeatures(features, { origin = null, cats, limit = 50, skipUnnamedRoutes = false }) {
   const out = [];
   for (const f of features) {
     if (cats && !cats.has(f.properties.cat)) continue;
+    if (skipUnnamedRoutes && !f.properties.name && ROUTE_CATS.has(f.properties.cat)) continue;
     out.push({ f, dUserKm: origin ? featureDistanceKm(origin, f) : null });
   }
   out.sort((a, b) => (origin ? a.dUserKm - b.dUserKm : a.f.properties.d - b.f.properties.d));

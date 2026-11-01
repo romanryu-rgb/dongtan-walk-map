@@ -62,3 +62,10 @@ def test_bike_without_match_keeps_two_points():
     pub = P("pub", cls="BikePath", name="X", coords=[north(0), north(1000)])
     bikes, rest = attach_bike_lines([pub], [])
     assert bikes[0].coords == [north(0), north(1000)]
+
+
+def test_national_scale_route_dropped():
+    from pipeline.merge import drop_oversized
+    huge = P("h", cls="WalkingTrail", coords=[north(0), north(300000)])
+    ok = P("o", cls="WalkingTrail", coords=[north(0), north(12000)])
+    assert [p.id for p in drop_oversized([huge, ok])] == ["o"]
