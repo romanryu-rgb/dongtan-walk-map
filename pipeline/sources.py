@@ -117,7 +117,7 @@ OSM_CATEGORY = {("amenity", "bench"): "벤치", ("amenity", "shelter"): "쉼터"
 
 
 def _osm_coords(el):
-    if el["type"] == "node":
+    if "lat" in el and "lon" in el:
         return [(el["lat"], el["lon"])]
     if "geometry" in el:
         return [(g["lat"], g["lon"]) for g in el["geometry"] if g]

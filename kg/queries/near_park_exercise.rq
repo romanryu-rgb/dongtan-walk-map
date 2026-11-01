@@ -1,0 +1,10 @@
+# 특정 공원(?parkName) 근처(500m 이내) 운동시설을 가까운 순으로
+# 예: ?parkName = "여울공원"@ko
+PREFIX dt: <https://romanryu-rgb.github.io/dongtan-walk-map/ontology#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+SELECT ?facility ?name ?distance WHERE {
+  ?park a dt:Park ; rdfs:label ?parkName ; dt:hasProximity ?p .
+  ?p dt:proximityTarget ?facility ; dt:distanceM ?distance .
+  ?facility a dt:ExerciseFacility .
+  OPTIONAL { ?facility rdfs:label ?name }
+} ORDER BY ?distance

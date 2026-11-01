@@ -1,0 +1,8 @@
+# 중심(청계동 552)에서 2km 이내 운동시설을 가까운 순으로 (숫자를 바꿔 사용)
+PREFIX dt: <https://romanryu-rgb.github.io/dongtan-walk-map/ontology#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+SELECT ?place ?name ?km WHERE {
+  ?place a dt:ExerciseFacility ; dt:distanceFromCenterKm ?km .
+  OPTIONAL { ?place rdfs:label ?name }
+  FILTER(?km < 2.0)
+} ORDER BY ?km

@@ -98,3 +98,42 @@ def test_osm_way_track_uses_geometry_as_running_course():
                           "geometry": [{"lat": 37.2, "lon": 127.1}, {"lat": 37.201, "lon": 127.101}]}]}
     [p] = osm_places("running", data)
     assert p.cls == "RunningCourse" and p.coords == [(37.2, 127.1), (37.201, 127.101)]
+
+
+def test_osm_node_without_coordinates_is_skipped():
+    data = {"elements": [{"type": "node", "id": 7, "tags": {"amenity": "bench"}}]}
+    assert osm_places("rest", data) == []
+
+
+def test_rest_query_requests_node_coordinates():
+    from pipeline.fetch_osm import QUERIES
+    assert "out tags;" not in QUERIES["rest"]
+
+
+def test_queries_keep_relation_members_geometry():
+    from pipeline.fetch_osm import QUERIES
+    for name, q in QUERIES.items():
+        if "relation(" in q:
+            assert "out geom;" in q and "tags" not in q.split("out", 1)[1], name
+
+
+def test_timeouts_are_retried(monkeypatch, tmp_path):
+    import pipeline.fetch_osm as fo
+    calls = []
+
+    class Resp:
+        def __enter__(self): return self
+        def __exit__(self, *a): return False
+        def read(self): return b'{"elements": []}'
+
+    def fake(req, timeout):
+        calls.append(req.full_url)
+        if len(calls) == 1:
+            raise TimeoutError("The read operation timed out")
+        return Resp()
+
+    monkeypatch.setattr(fo.urllib.request, "urlopen", fake)
+    monkeypatch.setattr(fo.time, "sleep", lambda s: None)
+    monkeypatch.setattr(fo.config, "RAW_DIR", tmp_path)
+    assert fo.query("x", "node(1);out;", refresh=True) == {"elements": []}
+    assert len(calls) == 2 and calls[0] != calls[1]

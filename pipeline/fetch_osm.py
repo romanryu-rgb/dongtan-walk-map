@@ -12,11 +12,11 @@ _A = "around:{r},{lat},{lon}".format(r=int(config.RADIUS_KM * 1000), lat=config.
 
 QUERIES = {
     "fitness": f'nwr({_A})[leisure=fitness_station];out center tags;',
-    "rest": f'(node({_A})[amenity=bench];node({_A})[amenity=shelter];node({_A})[leisure=picnic_table];);out tags;',
-    "running": f'(way({_A})[leisure=track][sport~"running|athletics"];relation({_A})[route=running];);out geom tags;',
-    "walking": f'(relation({_A})[route~"^(hiking|foot)$"];way({_A})[highway~"^(footway|path)$"][name];);out geom tags;',
-    "cycleway": f'(way({_A})[highway=cycleway];way({_A})[bicycle=designated][highway~"^(path|footway)$"];);out geom tags;',
-    "districts": f'relation({_A})[boundary=administrative][admin_level=8];out geom tags;',
+    "rest": f'(node({_A})[amenity=bench];node({_A})[amenity=shelter];node({_A})[leisure=picnic_table];);out body;',
+    "running": f'(way({_A})[leisure=track][sport~"running|athletics"];relation({_A})[route=running];);out geom;',
+    "walking": f'(relation({_A})[route~"^(hiking|foot)$"];way({_A})[highway~"^(footway|path)$"][name];);out geom;',
+    "cycleway": f'(way({_A})[highway=cycleway];way({_A})[bicycle=designated][highway~"^(path|footway)$"];);out tags geom;',
+    "districts": f'relation({_A})[boundary=administrative][admin_level=8];out geom;',
 }
 
 
@@ -34,6 +34,10 @@ def query(name, ql=None, refresh=False):
             break
         except urllib.error.HTTPError as e:
             if e.code not in (429, 502, 503, 504) or attempt == 5:
+                raise
+            time.sleep(10)
+        except (TimeoutError, urllib.error.URLError):
+            if attempt == 5:
                 raise
             time.sleep(10)
     path.parent.mkdir(parents=True, exist_ok=True)
