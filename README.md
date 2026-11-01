@@ -4,7 +4,8 @@
 그 주변 **휴게시설·운동시설·공원**을 보여 주는 휴대폰용 지도 사이트입니다.
 모든 데이터는 **온톨로지(RDF/OWL) 기반 지식 DB** 하나에서 나오며, 나중에 MCP 서버로 AI 챗봇에 연결할 수 있게 설계했습니다.
 
-- 사이트: https://romanryu-rgb.github.io/dongtan-walk-map/
+- 사이트: https://romanryu-rgb.github.io/dongtan-walk-map/ · https://dongtan-walk-map.pages.dev/ (Cloudflare)
+- 배포: `main`에 푸시하면 GitHub Pages(`pages.yml`)와 Cloudflare Pages(`cloudflare.yml`, 비밀값 `CLOUDFLARE_API_TOKEN` 필요)에 자동 배포
 - 설계 문서: [docs/specs/2026-11-01-dongtan-walk-map-design.md](docs/specs/2026-11-01-dongtan-walk-map-design.md)
 
 ## 폴더 구조
