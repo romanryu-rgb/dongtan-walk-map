@@ -6,6 +6,7 @@
 
 - 사이트: https://romanryu-rgb.github.io/dongtan-walk-map/ · https://dongtan-walk-map.pages.dev/ (Cloudflare)
 - 배포: `main`에 푸시하면 GitHub Pages(`pages.yml`)와 Cloudflare Pages(`cloudflare.yml`, 비밀값 `CLOUDFLARE_API_TOKEN` 필요)에 자동 배포
+- 자동 갱신: 매주 월요일 03:00(KST) `refresh-data.yml`이 공공데이터·OSM을 새로 받아 다시 만들고, 바뀐 내용이 있을 때만 커밋·배포 (Actions 탭에서 수동 실행도 가능)
 - 설계 문서: [docs/specs/2026-11-01-dongtan-walk-map-design.md](docs/specs/2026-11-01-dongtan-walk-map-design.md)
 
 ## 폴더 구조
