@@ -134,7 +134,7 @@ def test_timeouts_are_retried(monkeypatch, tmp_path):
 
     monkeypatch.setattr(fo.urllib.request, "urlopen", fake)
     monkeypatch.setattr(fo.time, "sleep", lambda s: None)
-    monkeypatch.setattr(fo.config, "RAW_DIR", tmp_path)
+    monkeypatch.setattr(fo, "CACHE_DIR", tmp_path)
     assert fo.query("x", "node(1);out;", refresh=True) == {"elements": []}
     assert len(calls) == 2 and calls[0] != calls[1]
 
@@ -253,3 +253,29 @@ def test_park_toilet_matching_ignores_spaces_dongtan_prefix_and_brackets():
         {"화장실명": "벌말체육공원"}, {"화장실명": "센트럴파크(테니스장)"}, {"화장실명": "동탄호수공원(라크몽)"}]}
     assert attach_park_toilets(parks, data) == 3
     assert all("공원 내 화장실 1곳" in p.extra["facility_info"] for p in parks)
+
+
+def test_osm_refresh_failure_falls_back_to_last_good_cache(monkeypatch, tmp_path):
+    import json as _json
+    import pipeline.fetch_osm as fo
+    monkeypatch.setattr(fo, "CACHE_DIR", tmp_path)
+    (tmp_path / "osm_x.json").write_text(_json.dumps({"elements": [{"id": 1}]}), encoding="utf-8")
+
+    def boom(req, timeout):
+        raise TimeoutError("The read operation timed out")
+
+    monkeypatch.setattr(fo.urllib.request, "urlopen", boom)
+    monkeypatch.setattr(fo.time, "sleep", lambda s: None)
+    assert fo.query("x", "node(1);out;", refresh=True) == {"elements": [{"id": 1}], "stale": True}
+
+
+def test_osm_refresh_failure_without_cache_raises(monkeypatch, tmp_path):
+    import pipeline.fetch_osm as fo
+    monkeypatch.setattr(fo, "CACHE_DIR", tmp_path)
+    monkeypatch.setattr(fo.urllib.request, "urlopen", lambda req, timeout: (_ for _ in ()).throw(TimeoutError("t")))
+    monkeypatch.setattr(fo.time, "sleep", lambda s: None)
+    try:
+        fo.query("y", "node(1);out;", refresh=True)
+    except TimeoutError:
+        return
+    raise AssertionError("must raise when there is no cache")

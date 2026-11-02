@@ -1,7 +1,8 @@
 """전체 빌드: python -m pipeline.run [--refresh]"""
 import sys
 
-from . import build_kg, config, export_web, fetch_osm, fetch_public, merge, relations, sources
+from . import build_kg, config, export_web, moi_toilets, fetch_osm, fetch_public, merge, relations, sources
+from .geocode import AddressGeocoder
 
 # 길관광정보 지오코딩 대상 사전 필터(중심 10km에 걸칠 수 있는 시·군)
 TRAIL_REGIONS = ("화성시", "오산시", "용인시", "수원시", "평택시")
@@ -17,6 +18,24 @@ def main(refresh=False):
         print(f"[파일] {fd['title']}: 유효 좌표 {len(ps)}")
         places += ps
         replaces.update(sources.REPLACES.get(pk, {}))
+    # 사용자가 받아 둔 행정안전부 화장실 파일(data/manual)이 있으면 화성시 화장실을 그것으로 바꾼다
+    moi_files = moi_toilets.find_files()
+    if moi_files:
+        std = fetch_public.fetch_dataset("15012892", refresh)
+        known = {}
+        for r in std["rows"]:
+            c = sources._coord(r, "LATITUDE", "LONGITUDE")
+            if c and "화성시" in ((r.get("RDNMADR") or "") + (r.get("LNMADR") or "")):
+                known.setdefault(moi_toilets.norm_name(r.get("TOILET_NM")), c)
+        geocoder = AddressGeocoder()
+        for f in moi_files:
+            rows = fetch_public.decode_csv(f.read_bytes())
+            target = [r for r in rows if moi_toilets.in_target_region(r)]
+            ts, collapsed = moi_toilets.drop_collapsed(moi_toilets.toilet_places(target, known, geocoder))
+            print(f"[행안부] {f.name}: {len(rows)}곳 중 대상 지역 {len(target)} → 위치 찾음 {len(ts)}"
+                  f" (다른 주소가 한 점에 몰려 뺀 {collapsed})")
+            places += ts
+        replaces["std-15012892"] = "화성시"
     for pk in sources.PUBLIC:
         ps = sources.public_places(pk, fetch_public.fetch_dataset(pk, refresh))
         print(f"[공공] {sources.PUBLIC[pk]['dataset']}: 유효 좌표 {len(ps)}")

@@ -31,7 +31,10 @@ jobs:
       - name: Fetch latest data and rebuild knowledge graph
         env:
           PYTHONIOENCODING: utf-8
-        run: python -m pipeline.run --refresh | tee /tmp/run.log
+        shell: bash
+        run: |
+          set -o pipefail  # 파이프라인이 실패하면 이 단계도 실패로 표시(알림 메일)
+          python -m pipeline.run --refresh | tee /tmp/run.log
 
       - name: Run tests
         run: python -m pytest tests/pipeline -q
@@ -42,11 +45,11 @@ jobs:
           if python -m pipeline.changed /tmp/places.old.geojson site/data/places.geojson; then
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add kg/dongtan-data.ttl site/data/places.geojson
+            git add kg/dongtan-data.ttl site/data/places.geojson data/cache
             git commit -m "data: weekly refresh $(date -u +%F)"
             git push
             echo "changed=true" >> "$GITHUB_OUTPUT"
-            { echo "### 데이터가 바뀌어 다시 배포합니다"; echo '```'; grep -E "^\[(파일|공공|OSM|웹)\]" /tmp/run.log; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+            { echo "### 데이터가 바뀌어 다시 배포합니다"; echo '```'; grep -E "^\[(파일|공공|OSM|devcomma|웹)\]" /tmp/run.log; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
           else
             echo "changed=false" >> "$GITHUB_OUTPUT"
             echo "### 바뀐 데이터가 없어 배포하지 않습니다" >> "$GITHUB_STEP_SUMMARY"

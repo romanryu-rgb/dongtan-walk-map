@@ -24,26 +24,40 @@ QUERIES = {
 }
 
 
-def query(name, ql=None, refresh=False):
-    path = config.RAW_DIR / f"osm_{name}.json"
-    if path.exists() and not refresh:
-        return json.loads(path.read_text(encoding="utf-8"))
-    body = urllib.parse.urlencode({"data": "[out:json][timeout:180];" + (ql or QUERIES[name])}).encode()
-    for attempt in range(6):
+# 마지막으로 잘 받은 OSM 자료는 git에 보관한다. 새로 받기가 실패하면(서버 혼잡 등) 이 자료를 그대로 쓴다.
+CACHE_DIR = config.ROOT / "data" / "cache" / "osm"
+
+
+def _download(body):
+    last = None
+    for attempt in range(4):
         url = config.OVERPASS_URLS[attempt % len(config.OVERPASS_URLS)]
         try:
             req = urllib.request.Request(url, data=body, headers={"User-Agent": config.USER_AGENT})
-            with urllib.request.urlopen(req, timeout=240) as r:
-                data = json.loads(r.read().decode("utf-8"))
-            break
+            with urllib.request.urlopen(req, timeout=150) as r:
+                return json.loads(r.read().decode("utf-8"))
         except urllib.error.HTTPError as e:
-            if e.code not in (429, 502, 503, 504) or attempt == 5:
+            if e.code not in (429, 502, 503, 504):
                 raise
-            time.sleep(10)
-        except (TimeoutError, urllib.error.URLError):
-            if attempt == 5:
-                raise
-            time.sleep(10)
+            last = e
+        except (TimeoutError, urllib.error.URLError) as e:
+            last = e
+        time.sleep(10)
+    raise last
+
+
+def query(name, ql=None, refresh=False):
+    path = CACHE_DIR / f"osm_{name}.json"
+    if path.exists() and not refresh:
+        return json.loads(path.read_text(encoding="utf-8"))
+    body = urllib.parse.urlencode({"data": "[out:json][timeout:180];" + (ql or QUERIES[name])}).encode()
+    try:
+        data = _download(body)
+    except Exception as e:
+        if not path.exists():
+            raise
+        print(f"[OSM] {name}: 새로 받지 못해 지난 자료를 씁니다 ({type(e).__name__})")
+        return {**json.loads(path.read_text(encoding="utf-8")), "stale": True}
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
     return data
@@ -53,7 +67,7 @@ class Geocoder:
     """Nominatim, 1초 간격, 파일 캐시. 결과 없음도 캐시한다."""
 
     def __init__(self):
-        self.path = config.RAW_DIR / "geocode.json"
+        self.path = config.ROOT / "data" / "cache" / "trail-geocode.json"
         self.cache = json.loads(self.path.read_text(encoding="utf-8")) if self.path.exists() else {}
 
     def __call__(self, addr):
