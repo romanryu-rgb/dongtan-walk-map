@@ -1,5 +1,5 @@
 // 사용법 도움말 팝업. 처음 방문(또는 도움말 내용이 바뀐 뒤 첫 방문) 때 한 번 자동으로 열린다.
-export const HELP_VERSION = 1;
+export const HELP_VERSION = 2;
 const SEEN_KEY = "dongtan.helpSeen";
 
 export const HELP_SECTIONS = [
@@ -50,8 +50,9 @@ export const HELP_SECTIONS = [
   },
   {
     title: "ℹ️ 데이터",
-    body: `<p>공공데이터포털 표준데이터(공원·운동기구·그늘막·무더위쉼터·자전거도로·공중화장실)와 OpenStreetMap 데이터를 씁니다.
-      장소 이름은 원본 그대로이며, 실제와 다를 수 있습니다.</p>`,
+    body: `<p>공공데이터포털 자료(화성시 무더위쉼터 2026-10, 화성도시공사 화장실 2025-12, 전국 표준데이터)와 OpenStreetMap을 씁니다.
+      장소 이름은 원본 그대로입니다. 상세 정보의 <b>출처·기준일</b>에서 언제 자료인지 확인할 수 있고,
+      기준일이 2년 넘은 자료에는 <span class="old">⚠️ 오래된 자료</span>가 표시됩니다.</p>`,
   },
 ];
 

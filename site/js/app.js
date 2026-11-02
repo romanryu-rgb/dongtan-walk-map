@@ -1,4 +1,4 @@
-import { clampRadius, featureDistanceKm, formatDistance, haversineKm, naverLinks, nextLocationMode, rankFeatures } from "./logic.js";
+import { clampRadius, featureDistanceKm, formatDistance, haversineKm, naverLinks, nextLocationMode, rankFeatures, sourceNote } from "./logic.js";
 import { initTools } from "./tools.js";
 import { initHelp } from "./help.js";
 
@@ -14,6 +14,7 @@ const CAT = {
   conv: { label: "편의점", icon: "🏪", color: "#db2777" },
 };
 const ALL = new Set(Object.keys(CAT));
+const TODAY = new Date().toISOString().slice(0, 10);
 const LIST_LIMIT = 50;
 const IS_ANDROID = /Android/i.test(navigator.userAgent);
 
@@ -30,7 +31,7 @@ const RADIUS_KEY = "dongtan.radiusKm";
 const savedRadius = () => { try { return localStorage.getItem(RADIUS_KEY); } catch { return null; } };
 const state = {
   cats: new Set(ALL), mode: "center", userPos: null, features: [], byId: new Map(), layers: {}, layerOf: new Map(),
-  center: null, toastShown: "", radiusKm: clampRadius(savedRadius()), radiusCircle: null, lastRefPos: null,
+  center: null, builtAt: "", toastShown: "", radiusKm: clampRadius(savedRadius()), radiusCircle: null, lastRefPos: null,
 };
 
 // ── 지도 ──────────────────────────────────────────
@@ -115,10 +116,11 @@ function renderList() {
     const p = f.properties;
     const c = CAT[p.cat];
     const mine = dUserKm != null ? `나에게서 ${formatDistance(dUserKm)} · ` : "";
+    const old = sourceNote(p, TODAY, state.builtAt).stale ? ' · <span class="old" title="오래된 자료">⚠️ 오래된 자료</span>' : "";
     return `<li data-id="${esc(p.id)}">
       <span class="dot" style="background:${c.color}22">${c.icon}</span>
       <div class="li-body"><div class="li-name">${p.h24 ? '<span class="badge">24시간</span> ' : ""}${esc(displayName(p))}</div>
-        <div class="li-dist">${mine}중심 ${p.d.toFixed(2)}km</div></div>
+        <div class="li-dist">${mine}중심 ${p.d.toFixed(2)}km${old}</div></div>
       <button class="naver" data-nav="${esc(p.id)}" aria-label="네이버 지도에서 열기">네이버</button></li>`;
   }).join("");
 }
@@ -172,7 +174,7 @@ function showDetail(id) {
     p.along.length ? ["지나는 길", esc(p.along.join(", "))] : null,
     p.near.length ? ["근처 시설", relList(p.near, true)] : null,
     p.fac.length ? ["경로상 시설", relList(p.fac.slice(0, 15), true)] : null,
-    ["출처", `${esc(p.src)}${p.date ? ` (${esc(p.date)})` : ""}`],
+    ["출처·기준일", (() => { const n = sourceNote(p, TODAY, state.builtAt); return esc(n.text) + (n.stale ? `<div class="old">${esc(n.stale)}</div>` : ""); })()],
   ].filter(Boolean);
   $("#detail").innerHTML = `<button class="back" data-back>‹ 목록으로</button>
     <h2>${esc(displayName(p))}</h2>
@@ -297,7 +299,8 @@ async function main() {
   state.center = fc.meta.center;
   state.features = fc.features;
   state.features.forEach((f) => state.byId.set(f.properties.id, f));
-  $("#built").textContent = `데이터 기준 ${fc.meta.builtAt}`;
+  state.builtAt = fc.meta.builtAt;
+  $("#built").textContent = `데이터 수집 ${fc.meta.builtAt}`;
   map.setView(state.center, 14);
   L.circle(state.center, { radius: fc.meta.radiusKm * 1000, color: "#64748b", weight: 1.5, dashArray: "6 6", fill: false, interactive: false }).addTo(map);
   L.marker(state.center, { icon: L.divIcon({ className: "", html: '<div class="center-pin">🏁</div>', iconSize: [24, 24], iconAnchor: [4, 22] }), title: fc.meta.centerLabel }).addTo(map);

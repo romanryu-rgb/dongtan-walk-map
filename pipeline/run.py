@@ -8,7 +8,15 @@ TRAIL_REGIONS = ("화성시", "오산시", "용인시", "수원시", "평택시"
 
 
 def main(refresh=False):
+    # 최신 파일데이터(시·공사)를 먼저 넣어 병합 때 옛 표준데이터보다 우선하게 한다
     places = []
+    replaces = {}
+    for pk in sources.FILES:
+        fd = fetch_public.fetch_file(pk, refresh)
+        ps = sources.file_places(pk, fd)
+        print(f"[파일] {fd['title']}: 유효 좌표 {len(ps)}")
+        places += ps
+        replaces.update(sources.REPLACES.get(pk, {}))
     for pk in sources.PUBLIC:
         ps = sources.public_places(pk, fetch_public.fetch_dataset(pk, refresh))
         print(f"[공공] {sources.PUBLIC[pk]['dataset']}: 유효 좌표 {len(ps)}")
@@ -26,6 +34,9 @@ def main(refresh=False):
         osm[name] = sources.osm_places(name, fetch_osm.query(name, refresh=refresh))
         print(f"[OSM] {name}: {len(osm[name])}")
 
+    before = len(places)
+    places = merge.drop_replaced(places, replaces)
+    print(f"[교체] 최신 파일이 덮는 지역의 옛 표준데이터 {before - len(places)}건 제외")
     places = merge.drop_oversized(merge.within_radius(places))
     osm = {k: merge.drop_oversized(merge.within_radius(v)) for k, v in osm.items()}
     bikes = [p for p in places if p.cls == "BikePath"]
@@ -33,6 +44,8 @@ def main(refresh=False):
     print(f"[병합] 공공 자전거도로 {len(bikes)} 중 OSM 선 매칭 {sum('line_from_osm' in b.extra for b in bikes)}")
     all_places = merge.dedupe(merge.unique_ids(places + [p for v in osm.values() for p in v]))
     print(f"[10km·병합 후] {len(all_places)}")
+    pt = fetch_public.fetch_file(sources.PARK_TOILET_PK, refresh)
+    print(f"[파일] {pt['title']}: 공원 상세에 붙인 화장실 {sources.attach_park_toilets(all_places, pt)} / {len(pt['rows'])}")
 
     districts = relations.load_districts(fetch_osm.query("districts", refresh=refresh))
     rels = relations.compute(all_places, districts)

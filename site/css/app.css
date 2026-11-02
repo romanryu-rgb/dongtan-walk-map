@@ -100,6 +100,7 @@ body:has(#sheet.full) { --sheet-h: 85vh; }
 #detail .rel { list-style: none; padding: 0; margin: 4px 0 0; }
 #detail .rel li { padding: 4px 0; border: 0; }
 #detail .rel a { color: inherit; }
+.old { color: #b45309; font-weight: 600; }
 .badge { display: inline-block; background: #db2777; color: #fff; border-radius: 6px; padding: 1px 6px; font-size: 11px; font-weight: 700; vertical-align: 1px; }
 #tool { flex: 1; overflow-y: auto; padding: 0 16px 12px; }
 #tool h2 { font-size: 18px; margin: 4px 0 4px; }

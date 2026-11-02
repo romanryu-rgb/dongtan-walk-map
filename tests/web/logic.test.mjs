@@ -101,3 +101,13 @@ test("unnamed hiking trails are skipped from the list too", () => {
     geometry: { type: "LineString", coordinates: [[C[1], C[0]], [C[1] + 0.001, C[0]]] } };
   assert.equal(rankFeatures([f], { cats: new Set(["hike"]), skipUnnamedRoutes: true }).length, 0);
 });
+
+test("sourceNote shows date and warns when older than 2 years", async () => {
+  const { sourceNote } = await import("../../site/js/logic.js");
+  assert.deepEqual(sourceNote({ src: "전국공중화장실표준데이터", date: "2019-04-03" }, "2026-11-02"),
+    { text: "전국공중화장실표준데이터 (기준일 2019-04-03)", stale: "⚠️ 2019년 자료라 실제와 다를 수 있습니다." });
+  assert.deepEqual(sourceNote({ src: "경기도 화성시_무더위쉼터", date: "2026-10-16" }, "2026-11-02"),
+    { text: "경기도 화성시_무더위쉼터 (기준일 2026-10-16)", stale: "" });
+  assert.deepEqual(sourceNote({ src: "OpenStreetMap", date: "" }, "2026-11-02", "2026-11-02"),
+    { text: "OpenStreetMap (수집일 2026-11-02, 원본에 기준일 없음)", stale: "" });
+});

@@ -87,3 +87,18 @@ def test_duplicate_source_ids_get_distinct_ids_and_exact_duplicates_dropped():
     assert len(out) == 2
     assert len({p.id for p in out}) == 2 and len({p.record_id for p in out}) == 2
     assert out[0].id == "std-1-X"
+
+
+def test_newer_file_source_wins_merge_over_old_standard_record():
+    new = P("new", name="동탄1동 행정복지센터", coords=[north(100)], source="file-15173634")
+    old = P("old", name="동탄1동주민센터", coords=[north(110)], source="std-15013199")
+    [m] = dedupe([new, old])
+    assert m.id == "new" and m.alt_names == ["동탄1동주민센터"]
+
+
+def test_replace_region_drops_old_standard_rows_inside_hwaseong():
+    from pipeline.merge import drop_replaced
+    a = P("a", source="std-15013199"); a.address = "경기도 화성시 반송동 1"
+    b = P("b", source="std-15013199"); b.address = "경기도 오산시 오산동 1"
+    c = P("c", source="std-15012890"); c.address = "경기도 화성시 반송동 2"
+    assert [p.id for p in drop_replaced([a, b, c], {"std-15013199": "화성시"})] == ["b", "c"]

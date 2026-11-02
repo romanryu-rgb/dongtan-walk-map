@@ -78,3 +78,10 @@ export function clampRadius(v) {
   if (v === null || v === undefined || Number.isNaN(n)) return RADIUS_DEFAULT_KM;
   return Math.min(10, Math.max(1, n));
 }
+
+// 출처·기준일 표시. 기준일이 2년 넘게 지나면 경고. OSM처럼 기준일이 없으면 수집일을 보여 준다.
+export function sourceNote({ src, date }, today, collected = "") {
+  if (!date) return { text: `${src} (수집일 ${collected || today}, 원본에 기준일 없음)`, stale: "" };
+  const ageDays = (Date.parse(today) - Date.parse(date)) / 86400000;
+  return { text: `${src} (기준일 ${date})`, stale: ageDays > 730 ? `⚠️ ${date.slice(0, 4)}년 자료라 실제와 다를 수 있습니다.` : "" };
+}

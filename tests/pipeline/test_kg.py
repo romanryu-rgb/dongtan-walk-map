@@ -100,3 +100,10 @@ def test_convenience_store_exports_conv_with_h24_flag(tmp_path):
     fc = export(build([s, u], {"near": [], "along": [], "in_park": [], "district": {}}), tmp_path / "p.geojson")
     props = {f["properties"]["name"]: f["properties"] for f in fc["features"]}
     assert props["GS25"]["cat"] == "conv" and props["GS25"]["h24"] is True and props["CU"]["h24"] is False
+
+
+def test_dataset_url_for_file_and_standard_sources():
+    from pipeline.build_kg import dataset_url
+    assert dataset_url("file-15173634") == "https://www.data.go.kr/data/15173634/fileData.do"
+    assert dataset_url("std-15012890") == "https://www.data.go.kr/data/15012890/standard.do"
+    assert dataset_url("osm") == "https://www.openstreetmap.org/copyright"

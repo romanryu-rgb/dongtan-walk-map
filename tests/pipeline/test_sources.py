@@ -203,3 +203,53 @@ def test_convenience_store_24h_and_unknown_hours():
     assert "영업시간: 24시간" in a.extra["facility_info"]
     assert b.extra["open24h"] is False and "영업시간 미확인" in b.extra["facility_info"]
     assert c.extra["open24h"] is False and "영업시간: Mo-Fr 10:00-19:00" in c.extra["facility_info"]
+
+
+def test_hwaseong_shelter_file_maps_with_source_and_date():
+    from pipeline.sources import file_places
+    data = {"title": "경기도 화성시_무더위쉼터_20261016", "ref_date": "2026-10-16", "rows": [
+        {"번호": "1", "무더위쉼터명": "동탄1동 행정복지센터", "시설면적(제곱미터)": "120", "이용가능인원수": "40",
+         "소재지지번주소": "경기도 화성시 동탄구 반송동 1", "소재지도로명주소": "경기도 화성시 동탄구 노작로 1",
+         "경도": "127.07", "위도": "37.20", "데이터기준일자": "2026-10-16"},
+        {"번호": "2", "무더위쉼터명": "좌표없음", "경도": "", "위도": "", "데이터기준일자": "2026-10-16"}]}
+    [p] = file_places("15173634", data)
+    assert p.cls == "RestFacility" and p.name == "동탄1동 행정복지센터"
+    assert p.dataset == "경기도 화성시_무더위쉼터" and p.ref_date == "2026-10-16"
+    assert p.source == "file-15173634" and p.extra["category"] == "무더위쉼터"
+    assert "이용가능인원: 40" in p.extra["facility_info"]
+
+
+def test_file_without_date_column_uses_title_date():
+    from pipeline.sources import file_places
+    data = {"title": "화성도시공사_공중화장실 설치현황_20251231", "ref_date": "2025-12-31", "rows": [
+        {"구분": "개방화장실", "화장실명": "홍난파생가", "소재지도로명주소": "활초리 279-3", "위도": "37.15", "경도": "126.9",
+         "개방시간": "09:00~18:00", "데이터기준일자": ""}]}
+    [p] = file_places("15126950", data)
+    assert p.cls == "PublicToilet" and p.ref_date == "2025-12-31" and p.extra["category"] == "개방화장실"
+
+
+def test_park_toilet_notes_attach_to_matching_park():
+    from pipeline.sources import attach_park_toilets
+    from pipeline.records import Place
+    park = Place(id="p", source="std-15012890", record_id="p", cls="Park", name="센트럴파크", coords=[(37.2, 127.07)],
+                 extra={"facility_info": "운동시설: 테니스장"})
+    other = Place(id="q", source="std-15012890", record_id="q", cls="Park", name="여울공원", coords=[(37.2, 127.07)], extra={})
+    data = {"title": "화성도시공사_화성시 공원 내 공중화장실 현황_20251231", "ref_date": "2025-12-31", "rows": [
+        {"권역": "1동탄", "화장실명": "센트럴파크(테니스장)"}, {"권역": "1동탄", "화장실명": "센트럴파크(음악분수)"},
+        {"권역": "2동탄", "화장실명": "없는공원(입구)"}]}
+    matched = attach_park_toilets([park, other], data)
+    assert matched == 2
+    assert "공원 내 화장실 2곳: 센트럴파크(테니스장), 센트럴파크(음악분수)" in park.extra["facility_info"]
+    assert "화성도시공사_화성시 공원 내 공중화장실 현황, 2025-12-31" in park.extra["facility_info"]
+    assert "facility_info" not in other.extra
+
+
+def test_park_toilet_matching_ignores_spaces_dongtan_prefix_and_brackets():
+    from pipeline.sources import attach_park_toilets
+    from pipeline.records import Place
+    mk = lambda n: Place(id=n, source="s", record_id=n, cls="Park", name=n, coords=[(37.2, 127.07)], extra={})
+    parks = [mk("벌말 체육공원"), mk("동탄센트럴파크"), mk("동탄호수공원(근린23호)")]
+    data = {"title": "t_20251231", "ref_date": "2025-12-31", "rows": [
+        {"화장실명": "벌말체육공원"}, {"화장실명": "센트럴파크(테니스장)"}, {"화장실명": "동탄호수공원(라크몽)"}]}
+    assert attach_park_toilets(parks, data) == 3
+    assert all("공원 내 화장실 1곳" in p.extra["facility_info"] for p in parks)

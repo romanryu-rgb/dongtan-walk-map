@@ -15,6 +15,13 @@ ID = Namespace(config.BASE + "id/")
 DATASET_URL = {"osm": "https://www.openstreetmap.org/copyright"}
 
 
+def dataset_url(source):
+    if source in DATASET_URL:
+        return DATASET_URL[source]
+    kind, pk = source.split("-", 1)
+    return f"https://www.data.go.kr/data/{pk}/{'fileData' if kind == 'file' else 'standard'}.do"
+
+
 def place_iri(p):
     return ID[f"{p.source}/{p.record_id}"]
 
@@ -57,8 +64,7 @@ def build(places, rels):
         g.add((s, DT.fromDataset, ds))
         g.add((ds, RDF.type, DT.Dataset))
         g.add((ds, RDFS.label, Literal(p.dataset, lang="ko")))
-        pk = p.source.removeprefix("std-")
-        g.add((ds, DCTERMS.source, URIRef(DATASET_URL.get(p.source, f"https://www.data.go.kr/data/{pk}/standard.do"))))
+        g.add((ds, DCTERMS.source, URIRef(dataset_url(p.source))))
         for src, rid, dname in p.extra.get("merged_from", []):
             other = ID[f"dataset/{src}"]
             g.add((s, DT.fromDataset, other))

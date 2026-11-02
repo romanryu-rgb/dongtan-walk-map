@@ -18,6 +18,11 @@ def within_radius(places):
     return out
 
 
+def drop_replaced(places, replaces):
+    """replaces = {옛 source: 지역명}. 최신 파일이 그 지역을 덮으므로 지역 안의 옛 행을 버린다."""
+    return [p for p in places if not (p.source in replaces and replaces[p.source] in p.address)]
+
+
 def drop_oversized(places, max_km=50.0):
     """전국 단위 노선(중심에서 max_km 넘게 뻗는 경로)은 동네 지도에 맞지 않아 제외한다."""
     return [p for p in places
