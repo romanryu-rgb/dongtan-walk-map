@@ -144,6 +144,12 @@ body:has(#sheet.full) { --sheet-h: 85vh; }
   display: grid; place-items: center; font-size: 12px; }
 .me { width: 18px; height: 18px; border-radius: 50%; background: #2563eb; border: 3px solid #fff;
   box-shadow: 0 0 0 8px rgba(37, 99, 235, .25); }
+#geo-debug {
+  position: fixed; top: calc(120px + env(safe-area-inset-top)); left: 12px; z-index: 1100; margin: 0; pointer-events: none;
+  background: rgba(15, 23, 42, .85); color: #e2e8f0; padding: 8px 10px; border-radius: 8px; font: 12px/1.5 ui-monospace, monospace;
+  white-space: pre-wrap; max-width: calc(100vw - 24px);
+}
+#toast a { color: inherit; font-weight: 700; }
 .center-pin { font-size: 24px; line-height: 1; }
 
 /* PC: 목록을 왼쪽 패널로 */

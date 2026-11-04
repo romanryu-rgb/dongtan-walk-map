@@ -1,4 +1,4 @@
-import { clampRadius, featureDistanceKm, formatDistance, haversineKm, naverLinks, nextLocationMode, rankFeatures, sourceNote } from "./logic.js";
+import { chromeIntentUrl, clampRadius, featureDistanceKm, formatDistance, geoErrorMessage, haversineKm, isInAppBrowser, naverLinks, nextLocationMode, rankFeatures, sourceNote } from "./logic.js";
 import { initTools } from "./tools.js";
 import { initHelp } from "./help.js";
 
@@ -17,6 +17,8 @@ const ALL = new Set(Object.keys(CAT));
 const TODAY = new Date().toISOString().slice(0, 10);
 const LIST_LIMIT = 50;
 const IS_ANDROID = /Android/i.test(navigator.userAgent);
+const IN_APP = isInAppBrowser(navigator.userAgent);
+const DEBUG = new URLSearchParams(location.search).has("debug");
 
 const $ = (s) => document.querySelector(s);
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -32,6 +34,7 @@ const savedRadius = () => { try { return localStorage.getItem(RADIUS_KEY); } cat
 const state = {
   cats: new Set(ALL), mode: "center", userPos: null, features: [], byId: new Map(), layers: {}, layerOf: new Map(),
   center: null, builtAt: "", toastShown: "", radiusKm: clampRadius(savedRadius()), radiusCircle: null, lastRefPos: null,
+  geo: { perm: "?", status: "시작 전", code: null, acc: null, at: null },
 };
 
 // ── 지도 ──────────────────────────────────────────
@@ -249,15 +252,17 @@ $("#grip").addEventListener("pointerup", (e) => {
 $("#grip").addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setSheet(SHEETS[(SHEETS.indexOf(sheetState()) + 1) % 3]); } });
 
 // ── 위치 ──────────────────────────────────────────
-function toast(msg) {
+// ms: 0이면 탭할 때까지 유지, html: 링크를 넣을 때만
+function toast(msg, { ms = 5000, html = false } = {}) {
   if (state.toastShown === msg) return;
   state.toastShown = msg;
   const t = $("#toast");
-  t.textContent = msg;
+  t[html ? "innerHTML" : "textContent"] = msg;
   t.hidden = false;
   clearTimeout(toast.timer);
-  toast.timer = setTimeout(() => { t.hidden = true; }, 5000);
+  if (ms) toast.timer = setTimeout(() => { t.hidden = true; }, ms);
 }
+$("#toast").addEventListener("click", () => { $("#toast").hidden = true; });
 
 function updateMode(pos) {
   const prev = state.mode;
@@ -271,23 +276,74 @@ function updateMode(pos) {
   } else {
     if (meMarker) map.removeLayer(meMarker);
     $("#locate").hidden = true;
-    if (pos) toast("현재 위치가 동탄 중심에서 10km 이상 떨어져 있어 중심 기준으로 보여 드립니다.");
-    else toast("위치를 확인할 수 없어 지도 중심(청계동 552) 기준으로 보여 드립니다.");
+    if (pos) toast(`현재 위치가 동탄 중심에서 ${haversineKm(pos, state.center).toFixed(1)}km 떨어져 있어(10km 이상) 중심 기준으로 보여 드립니다.`);
+    else noPositionToast();
   }
+  renderDebug();
   const moved = state.lastRefPos && haversineKm(state.lastRefPos, refPos()) > 0.1;
   if (prev !== state.mode || moved) refreshMap(); // 100m 넘게 움직였을 때만 지도 다시 거르기
   if (prev !== state.mode || state.mode === "user") renderList();
 }
 
+// 위치를 못 받았을 때 원인에 맞는 안내
+function noPositionToast() {
+  if (!window.isSecureContext) {
+    toast("https:// 주소로 열어야 위치(GPS)를 쓸 수 있습니다. 지도 중심 기준으로 보여 드립니다.", { ms: 0 });
+  } else if (IN_APP) {
+    const how = IS_ANDROID ? ` <a href="${esc(chromeIntentUrl(location.href))}">Chrome으로 열기</a>` : " 메뉴에서 'Safari로 열기'를 눌러 주세요.";
+    toast(`앱 안 브라우저(카카오톡 등)에서는 위치가 막힐 수 있습니다.${how}`, { ms: 0, html: true });
+  } else {
+    toast(geoErrorMessage(state.geo.code), { ms: state.geo.code === 1 || state.geo.code === 2 ? 10000 : 5000 });
+  }
+}
+
 function startGeolocation() {
-  if (!("geolocation" in navigator)) { updateMode(null); return; }
+  if (!window.isSecureContext) { state.geo.status = "https 아님"; updateMode(null); return; }
+  if (!("geolocation" in navigator)) { state.geo.status = "위치 기능 없음"; updateMode(null); return; }
+  const ok = (p) => {
+    Object.assign(state.geo, { status: "성공", code: null, acc: Math.round(p.coords.accuracy), at: new Date() });
+    updateMode([p.coords.latitude, p.coords.longitude]);
+  };
+  const fail = (e) => {
+    Object.assign(state.geo, { status: `오류 ${e.code}: ${e.message}`, code: e.code, at: new Date() });
+    if (state.mode !== "user") updateMode(null); else renderDebug();
+  };
+  let watchId = null;
+  const watch = () => {
+    if (watchId != null) navigator.geolocation.clearWatch(watchId);
+    // 대략적인 위치(기지국·와이파이)를 먼저 빨리 받고, 이어서 정확한 GPS 위치를 계속 받는다
+    navigator.geolocation.getCurrentPosition(ok, () => {}, { enableHighAccuracy: false, timeout: 8000, maximumAge: 600000 });
+    watchId = navigator.geolocation.watchPosition(ok, fail, { enableHighAccuracy: true, timeout: 15000, maximumAge: 15000 });
+  };
+  watch();
   // 권한 창에 응답하지 않으면 콜백이 오지 않으므로 12초 뒤 중심 기준 안내
   setTimeout(() => { if (!state.userPos) updateMode(null); }, 12000);
-  navigator.geolocation.watchPosition(
-    (p) => updateMode([p.coords.latitude, p.coords.longitude]),
-    () => { if (state.mode !== "user") updateMode(null); },
-    { enableHighAccuracy: true, timeout: 10000, maximumAge: 15000 },
-  );
+  // 설정에서 위치 권한을 허용으로 바꾸면 새로고침 없이 다시 시도
+  navigator.permissions?.query({ name: "geolocation" }).then((s) => {
+    state.geo.perm = s.state;
+    renderDebug();
+    s.onchange = () => {
+      state.geo.perm = s.state;
+      if (s.state === "granted" && !state.userPos) { state.toastShown = ""; watch(); }
+      renderDebug();
+    };
+  }).catch(() => {});
+}
+
+// 주소 뒤에 ?debug=1 을 붙이면 위치 상태를 화면에 보여 준다
+function renderDebug() {
+  if (!DEBUG) return;
+  let el = $("#geo-debug");
+  if (!el) { el = document.createElement("pre"); el.id = "geo-debug"; document.body.append(el); }
+  const g = state.geo, pos = state.userPos;
+  const yn = (b) => (b ? "예" : "아니오");
+  el.textContent = [
+    `https: ${yn(window.isSecureContext)} · 앱 안 브라우저: ${yn(IN_APP)}`,
+    `권한: ${g.perm} · 상태: ${g.status}`,
+    pos ? `좌표: ${pos[0].toFixed(5)}, ${pos[1].toFixed(5)} (±${g.acc}m)` : "좌표: 없음",
+    pos && state.center ? `중심까지: ${haversineKm(pos, state.center).toFixed(2)}km → ${state.mode === "user" ? "내 위치 기준" : "중심 기준"}` : `모드: ${state.mode}`,
+    `갱신: ${g.at ? g.at.toLocaleTimeString() : "-"}`,
+  ].join("\n");
 }
 
 $("#locate").addEventListener("click", () => { if (state.userPos) map.setView(state.userPos, 17); });

@@ -2,6 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   haversineKm, featureDistanceKm, nextLocationMode, rankFeatures, formatDistance, naverLinks, clampRadius,
+  isInAppBrowser, chromeIntentUrl, geoErrorMessage,
 } from "../../site/js/logic.js";
 
 const C = [37.19757, 127.11996];
@@ -110,4 +111,25 @@ test("sourceNote shows date and warns when older than 2 years", async () => {
     { text: "경기도 화성시_무더위쉼터 (기준일 2026-10-16)", stale: "" });
   assert.deepEqual(sourceNote({ src: "OpenStreetMap", date: "" }, "2026-11-02", "2026-11-02"),
     { text: "OpenStreetMap (수집일 2026-11-02, 원본에 기준일 없음)", stale: "" });
+});
+
+test("in-app browsers are detected, normal browsers are not", () => {
+  assert.equal(isInAppBrowser("Mozilla/5.0 (Linux; Android 14; SM-S918N) AppleWebKit/537.36 Chrome/130 Mobile Safari/537.36 KAKAOTALK 10.8.0"), true);
+  assert.equal(isInAppBrowser("Mozilla/5.0 (Linux; Android 14; SM-S918N; wv) AppleWebKit/537.36 Version/4.0 Chrome/130 Mobile Safari/537.36 NAVER(inapp; search; 2000; 12.6.1)"), true);
+  assert.equal(isInAppBrowser("Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 Instagram 300.0"), true);
+  assert.equal(isInAppBrowser("Mozilla/5.0 (Linux; Android 14; SM-S918N) AppleWebKit/537.36 Chrome/130 Mobile Safari/537.36"), false);
+  assert.equal(isInAppBrowser("Mozilla/5.0 (Linux; Android 14; SM-S918N) AppleWebKit/537.36 SamsungBrowser/26.0 Chrome/122 Mobile Safari/537.36"), false);
+  assert.equal(isInAppBrowser("Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 Version/17.0 Mobile/15E148 Safari/604.1"), false);
+});
+
+test("chrome intent url keeps path and query", () => {
+  assert.equal(chromeIntentUrl("https://example.pages.dev/a/?debug=1"),
+    "intent://example.pages.dev/a/?debug=1#Intent;scheme=https;package=com.android.chrome;end");
+});
+
+test("geolocation error codes map to specific advice", () => {
+  assert.match(geoErrorMessage(1), /권한/);
+  assert.match(geoErrorMessage(2), /GPS/);
+  assert.match(geoErrorMessage(3), /찾는 중/);
+  assert.match(geoErrorMessage(99), /확인할 수 없어/);
 });

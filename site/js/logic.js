@@ -85,3 +85,22 @@ export function sourceNote({ src, date }, today, collected = "") {
   const ageDays = (Date.parse(today) - Date.parse(date)) / 86400000;
   return { text: `${src} (기준일 ${date})`, stale: ageDays > 730 ? `⚠️ ${date.slice(0, 4)}년 자료라 실제와 다를 수 있습니다.` : "" };
 }
+
+// 카카오톡·네이버·인스타그램 등 앱 안 브라우저는 위치 권한을 막는 경우가 많다
+export function isInAppBrowser(ua) {
+  return /KAKAOTALK|NAVER\(inapp|Instagram|FBAN|FBAV|FB_IAB|Line\/|DaumApps|Whale\/.*inapp|; wv\)/i.test(ua);
+}
+
+// 안드로이드에서 같은 주소를 Chrome으로 여는 링크
+export function chromeIntentUrl(href) {
+  const u = new URL(href);
+  return `intent://${u.host}${u.pathname}${u.search}#Intent;scheme=${u.protocol.replace(":", "")};package=com.android.chrome;end`;
+}
+
+// GeolocationPositionError.code → 사용자 안내
+export function geoErrorMessage(code) {
+  if (code === 1) return "위치 권한이 꺼져 있습니다. 주소창 왼쪽 아이콘 → 권한 → 위치를 '허용'으로 바꾼 뒤 새로고침해 주세요.";
+  if (code === 2) return "휴대폰 위치(GPS)가 꺼져 있거나 신호를 못 잡았습니다. 빠른 설정에서 '위치'를 켜 주세요.";
+  if (code === 3) return "위치를 찾는 중입니다… 실내라면 창가나 실외에서 더 빨리 잡힙니다.";
+  return "위치를 확인할 수 없어 지도 중심(청계동 552) 기준으로 보여 드립니다.";
+}
