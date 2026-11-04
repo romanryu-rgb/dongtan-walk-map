@@ -268,17 +268,19 @@ function updateMode(pos) {
   const prev = state.mode;
   state.userPos = pos;
   state.mode = nextLocationMode(prev, pos, state.center);
-  if (state.mode === "user") {
+  // 파란 점은 위치만 있으면 항상 보이고, 목록·반경 기준은 동탄 10km 안일 때만 내 위치
+  if (pos) {
     if (!meMarker) meMarker = L.marker(pos, { icon: L.divIcon({ className: "", html: '<div class="me"></div>', iconSize: [18, 18], iconAnchor: [9, 9] }), interactive: false, zIndexOffset: 1000 });
     meMarker.setLatLng(pos).addTo(map);
-    $("#locate").hidden = false;
+  } else if (meMarker) map.removeLayer(meMarker);
+  $("#locate").hidden = !pos;
+  if (state.mode === "user") {
     if (prev !== "user") { map.setView(pos, 16); state.toastShown = ""; }
-  } else {
-    if (meMarker) map.removeLayer(meMarker);
-    $("#locate").hidden = true;
-    if (pos) toast(`현재 위치가 동탄 중심에서 ${haversineKm(pos, state.center).toFixed(1)}km 떨어져 있어(10km 이상) 중심 기준으로 보여 드립니다.`);
-    else noPositionToast();
-  }
+  } else if (pos) {
+    // 거리 안내는 한 번만(걸으며 위치가 갱신될 때마다 다시 뜨지 않게)
+    if (!state.farToastShown) toast(`내 위치(파란 점, ◎)는 동탄 중심에서 ${haversineKm(pos, state.center).toFixed(1)}km 떨어져 있어, 목록은 지도 중심 기준으로 보여 드립니다.`, { ms: 8000 });
+    state.farToastShown = true;
+  } else noPositionToast();
   renderDebug();
   const moved = state.lastRefPos && haversineKm(state.lastRefPos, refPos()) > 0.1;
   if (prev !== state.mode || moved) refreshMap(); // 100m 넘게 움직였을 때만 지도 다시 거르기
@@ -306,7 +308,8 @@ function startGeolocation() {
   };
   const fail = (e) => {
     Object.assign(state.geo, { status: `오류 ${e.code}: ${e.message}`, code: e.code, at: new Date() });
-    if (state.mode !== "user") updateMode(null); else renderDebug();
+    // 이미 받은 위치가 있으면 잠깐의 오류로 파란 점을 지우지 않는다
+    if (!state.userPos) updateMode(null); else renderDebug();
   };
   let watchId = null;
   const watch = () => {
